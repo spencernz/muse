@@ -104,7 +104,7 @@ The compact player anchors below the clicked menu-bar/tray icon (or above a bott
 
 Muse is released under the [MIT License](LICENSE), © 2026 Spencer Hu.
 
-- **Your music stays yours.** The repository contains no commercial audio, artwork or lyrics. Test fixtures are generated silence (see `src-tauri/tests/fixtures/README.md`). Album names in the design prototype are fictional.
+- **Your music stays yours.** The repository contains no commercial audio, artwork or lyrics. Test fixtures are generated silence (see `src-tauri/tests/fixtures/README.md`). The design prototype (`design/muse_metro_prototype.html`) was created by Spencer Hu with AI tools, and its album names are fictional.
 - **Lyrics** are fetched at runtime from [LRCLIB](https://lrclib.net) and are not stored in this repository.
 - **Retro visualizer:** uses [butterchurn](https://github.com/jberg/butterchurn) (MIT). Its MilkDrop presets come from the `butterchurn-presets` npm package and are compiled into `src/visualizer/retro-presets.ts` on `npm install`. That file is gitignored, so this repository does not redistribute preset content. Each preset remains the work of the artist named in its title. License texts ship in `public/licenses/`.
 - **Music profiles (optional):** the Essentia runtime (AGPL-3.0) and musicnn model weights (CC BY-NC-ND 4.0) are downloaded on demand from their publishers and are not part of this repository. The model weights are licensed for non-commercial use only, so any commercial use of Muse must leave this feature disabled.
