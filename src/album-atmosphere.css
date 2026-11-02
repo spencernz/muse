@@ -1,0 +1,167 @@
+/* Cover-tinted album atmosphere, confined to the content panel. */
+.album-page {
+  min-height: 100%;
+  color: var(--muse-text);
+  background: var(--album-background);
+  margin-inline: calc(-1 * var(--content-padding));
+  transition: background-color 300ms ease;
+}
+.album-hero {
+  position: relative;
+  isolation: isolate;
+  overflow: clip;
+  background: var(--album-background);
+}
+.album-hero-content {
+  padding: 16px var(--content-padding) 32px;
+}
+.album-page .album-hero-grid {
+  display: grid;
+  grid-template-columns: clamp(240px, 25vw, 360px) minmax(0, 1fr);
+  align-items: center;
+  gap: 32px;
+  margin: 0;
+}
+.album-hero-grid > div {
+  min-width: 0;
+}
+.album-page .detail-cover {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1;
+}
+.album-page .heading {
+  font-size: clamp(32px, 3.8vw, 60px);
+  line-height: 1.05;
+  letter-spacing: -0.04em;
+  margin: 16px 0;
+  overflow-wrap: anywhere;
+}
+.album-page .eyebrow {
+  color: var(--album-accent);
+  font-size: 14px;
+  letter-spacing: 1.5px;
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.album-page .eyebrow .text-link {
+  font-size: inherit;
+  text-transform: uppercase;
+  letter-spacing: inherit;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-align: left;
+}
+.album-edition {
+  font-size: 18px;
+  color: var(--album-muted);
+  margin: 0 0 16px;
+  overflow-wrap: anywhere;
+}
+.album-page .album-info {
+  color: var(--album-muted);
+  font-size: 14px;
+  line-height: 1.7;
+}
+.album-page .actions {
+  margin-top: 24px;
+}
+.album-page .primary {
+  background: var(--album-accent);
+  color: var(--album-on-accent);
+}
+.album-page .secondary.active,
+.album-page .iconbtn.active {
+  color: var(--album-accent);
+}
+.album-page input {
+  accent-color: var(--album-accent);
+}
+.album-page :focus-visible {
+  outline-color: var(--album-accent);
+}
+.album-page .primary:focus-visible {
+  outline-color: var(--muse-text);
+}
+.album-tracks {
+  padding: 0 var(--content-padding) 24px;
+}
+.album-page .muted,
+.album-page .sub {
+  color: var(--album-muted);
+}
+.album-page .track-row {
+  color: inherit;
+  font-size: 14px;
+}
+.album-page .track-row.playing {
+  background: var(--album-surface);
+  box-shadow: inset 3px 0 var(--album-accent);
+}
+.album-page .track-row.playing .track-name {
+  color: var(--album-accent);
+}
+.album-page .track-row:has(input:checked) {
+  background: var(--muse-raised);
+}
+.album-page .track-row.playing .track-name::before {
+  content: "▶ ";
+}
+@media (max-width: 1100px) {
+  .album-page .album-hero-grid {
+    grid-template-columns: minmax(200px, 30%) minmax(0, 1fr);
+    gap: 24px;
+  }
+}
+@media (max-width: 760px) {
+  .album-page .album-hero-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 24px;
+  }
+  .album-page .detail-cover {
+    width: min(280px, 100%);
+  }
+  .album-page .heading {
+    font-size: clamp(32px, 6vw, 48px);
+  }
+  .album-page .track-toolbar {
+    align-items: start;
+    flex-direction: column;
+  }
+}
+
+.content.album-content {
+  position: relative;
+  isolation: isolate;
+  background: var(--album-background);
+}
+.album-panel-background {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  overflow: clip;
+  pointer-events: none;
+}
+.album-panel-art {
+  position: absolute;
+  inset: -100px;
+  width: calc(100% + 200px);
+  height: calc(100% + 200px);
+  max-width: none;
+  object-fit: cover;
+  filter: blur(65px) saturate(1.2);
+  opacity: 0.85;
+}
+.album-panel-overlay {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, #08090d99, #08090dbf),
+    linear-gradient(0deg, var(--album-background), transparent 70%);
+}
+.album-page,
+.album-hero {
+  background: transparent;
+}

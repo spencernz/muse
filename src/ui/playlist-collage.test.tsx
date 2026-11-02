@@ -1,0 +1,20 @@
+import { act, cleanup, fireEvent, render } from "@testing-library/react";
+import { afterEach, expect, it, vi } from "vitest";
+import { PlaylistCollageCard } from "./playlist-collage";
+import { api } from "../native";
+vi.mock("../native",()=>({artwork:(path:string)=>path,api:{playlistCovers:vi.fn()}}));
+afterEach(()=>{cleanup();vi.useRealTimers();vi.restoreAllMocks();vi.unstubAllGlobals();});
+it("rotates one of five covers and pauses while hovered",async()=>{
+ vi.useFakeTimers();vi.spyOn(document,"hidden","get").mockReturnValue(false);
+ vi.stubGlobal("matchMedia",()=>({matches:false,addEventListener:vi.fn(),removeEventListener:vi.fn()}));
+ vi.stubGlobal("Image",class {onload:(()=>void)|null=null;onerror:(()=>void)|null=null;set src(_:string){queueMicrotask(()=>this.onload?.());}removeAttribute(){}});
+ vi.mocked(api.playlistCovers).mockResolvedValue(["a","b","c","d","e","f","g"]);
+ const {container}=render(<PlaylistCollageCard id="mix" name="Mix" detail="20 tracks" onOpen={()=>{}}/>);
+ await act(async()=>{});
+ const images=()=>Array.from(container.querySelectorAll(".collage-image-in")).map(node=>node.getAttribute("src"));
+ const first=images();expect(first).toHaveLength(5);expect(new Set(first).size).toBe(5);
+ await act(async()=>{await vi.advanceTimersByTimeAsync(7200);});
+ expect(images().filter((path,index)=>path!==first[index])).toHaveLength(1);
+ const next=images();fireEvent.mouseEnter(container.querySelector("button")!);
+ await act(async()=>{await vi.advanceTimersByTimeAsync(15000);});expect(images()).toEqual(next);
+});

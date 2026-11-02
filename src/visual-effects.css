@@ -1,0 +1,40 @@
+/* Visual Effects share the existing, fixed-height Now Playing content well. */
+.visual-effects{display:flex;flex-direction:column;height:100%;min-height:0;gap:12px;overflow:visible}
+.visual-stage{position:relative;flex:1;min-height:180px;background:#080b11;overflow:hidden}
+.visual-stage canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.visual-status{position:absolute;left:12px;bottom:10px;font-size:11px;letter-spacing:.04em;color:#d4d7de;background:#080b1199;padding:3px 5px;max-width:calc(100% - 24px)}
+.visual-controls{flex:none;display:flex;flex-direction:column;gap:8px}
+.visual-modes{display:flex;gap:2px}.visual-modes button{flex:1;font-size:14px;min-height:40px;padding:8px 4px;min-width:0;background:transparent;color:var(--now-muted);border-bottom:2px solid transparent;transition:color 160ms,background 160ms}
+.visual-modes button[aria-pressed=true]{color:#f8f7fa;border-bottom-color:var(--now-accent);background:#ffffff0a}
+.visual-modes button:hover{background:#ffffff12;color:#f8f7fa}
+.visual-options{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:4px;font-size:12px;color:var(--now-muted)}
+.visual-options label{display:flex;align-items:center;gap:8px}.visual-options input[type=range]{width:76px;min-width:40px;height:20px}.visual-select{position:relative;display:inline-flex;min-width:0}.visual-select svg{position:absolute;right:8px;top:50%;transform:translateY(-50%);pointer-events:none}.visual-options select{appearance:none;-webkit-appearance:none;border:1px solid #ffffff40;border-radius:0;background:#ffffff08;color:#f8f7fa;max-width:150px;padding:6px 28px 6px 10px;font-size:12px;line-height:20px;height:36px}.visual-options .visual-auto{margin-left:auto;white-space:nowrap}.visual-auto input{width:14px;height:14px}
+.now-tabs{flex-wrap:wrap;gap:20px}.now-tabs button{white-space:nowrap}
+@media(max-width:850px){.visual-options{gap:8px}.visual-options select{max-width:130px}.now-tabs{gap:12px}.now-tabs button{font-size:11px;letter-spacing:.12em}}
+
+.now-view-panel .visual-effects{height:clamp(360px,45vh,460px)}
+@media(max-width:600px){.now-view-panel .visual-effects{height:420px}.now-view-panel .lyrics-panel{height:420px}}
+.auto-sync-settings{margin-block:16px 24px}.auto-sync-settings label{display:flex;align-items:center;gap:8px}.auto-sync-settings input[type=checkbox]{width:16px;height:16px}.auto-sync-settings select{height:36px;padding:4px 8px}
+
+.visual-options select:focus-visible{outline:2px solid var(--now-accent);outline-offset:2px}
+@media(prefers-reduced-motion:reduce){.visual-modes button{transition:none}}
+
+/* Promote the existing canvas container into the top layer without remounting it. */
+dialog.visual-effects{position:relative;width:100%;max-width:none;max-height:none;margin:0;padding:0;border:0;color:inherit;background:transparent}
+.visual-display-actions{position:absolute;top:8px;right:8px;display:flex;gap:4px;z-index:2}
+.visual-display-actions .iconbtn{width:40px;height:40px;border:1px solid transparent;background:transparent;color:#f8f7fa;border-radius:0}
+.visual-display-actions .iconbtn:hover{background:#ffffff1a;border-color:#ffffff40}
+.visual-display-actions .iconbtn:focus-visible{outline:2px solid var(--now-accent);outline-offset:2px}
+.visual-display-error{position:absolute;z-index:3;left:12px;top:8px;max-width:calc(100% - 120px);background:#151515dd;padding:8px;color:#fff;font-size:14px}
+dialog.visual-effects--fullscreen{position:fixed;inset:0;width:100vw;height:100dvh!important;margin:0;gap:0;background:#080b11;overflow:hidden}
+.visual-effects--fullscreen::backdrop{background:#080b11}
+.visual-effects--fullscreen .visual-stage{height:100%;min-height:0}
+.visual-effects--fullscreen .visual-controls,.visual-effects--fullscreen .visual-status{display:none}
+.visual-effects--fullscreen .visual-display-actions{top:max(16px,env(safe-area-inset-top));right:max(16px,env(safe-area-inset-right))}
+.now-page--visual-wide .now-main{grid-template-columns:minmax(0,1fr);max-width:1800px;padding-inline:clamp(24px,5vw,96px)}
+.now-page--visual-wide .now-artwork[hidden]{display:none}
+.now-page--visual-wide .now-information{width:100%;max-width:none}
+.now-page--visual-wide .now-view-panels{min-height:clamp(380px,55vh,680px)}
+.now-page--visual-wide .visual-effects{height:clamp(380px,55vh,680px)}
+@media(max-width:600px){.visual-display-actions .iconbtn{width:44px;height:44px}.now-page--visual-wide .now-main{padding-inline:16px}.now-page--visual-wide .visual-effects{height:460px}}
+@media(max-width:600px){.visual-modes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}.visual-modes button{min-height:44px}}

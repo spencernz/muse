@@ -1,0 +1,148 @@
+{
+  "version": "musicnn-profiles-1",
+  "platform": "macos-arm64",
+  "license": "Essentia: AGPL-3.0; model weights: CC-BY-NC-ND-4.0; Python and wheel licences included in runtime distributions.",
+  "assets": [
+    {
+      "name": "python.tar.gz",
+      "kind": "runtime",
+      "url": "https://github.com/astral-sh/python-build-standalone/releases/download/20261026/cpython-3.14.10%2B20261026-aarch64-apple-darwin-install_only_stripped.tar.gz",
+      "sha256": "95eb8c87d16af37c54e9765e31d8c56c0d8ffa9968ea0f704f73a9b83f84e9f9",
+      "size": 26753457
+    },
+    {
+      "name": "essentia_tensorflow-2.1b6.dev1438-cp314-cp314-macosx_15_0_arm64.whl",
+      "kind": "wheel",
+      "url": "https://files.pythonhosted.org/packages/5b/27/23fdcd5408ea65af81460cf6811c8f60fd2170d0598687d38608fe226c59/essentia_tensorflow-2.1b6.dev1438-cp314-cp314-macosx_15_0_arm64.whl",
+      "sha256": "c50c41f3d4cbc6e981dbdd3e32465dcf4a765b38d835ceb26c0206f12108d192",
+      "size": 98786744
+    },
+    {
+      "name": "numpy-2.5.4-cp314-cp314-macosx_11_0_arm64.whl",
+      "kind": "wheel",
+      "url": "https://files.pythonhosted.org/packages/f3/49/fee7587c33ee35f7977f9051d7f2023d4e7246d62710c80f20c2361ea232/numpy-2.5.4-cp314-cp314-macosx_11_0_arm64.whl",
+      "sha256": "ffa6ce09a1c6a08e9667dd9c97aa0b14184e8d18f2a14b78b2a2328c9147f076",
+      "size": 12019666
+    },
+    {
+      "name": "pyyaml-6.0.3-cp314-cp314-macosx_11_0_arm64.whl",
+      "kind": "wheel",
+      "url": "https://files.pythonhosted.org/packages/bd/9c/4d95bb87eb2063d20db7b60faa3840c1b18025517ae857371c4dd55a6b3a/pyyaml-6.0.3-cp314-cp314-macosx_11_0_arm64.whl",
+      "sha256": "34d5fcd24b8445fadc33f9cf348c1047101756fd760b4dacb5c3e99755703310",
+      "size": 173809
+    },
+    {
+      "name": "six-1.17.0-py2.py3-none-any.whl",
+      "kind": "wheel",
+      "url": "https://files.pythonhosted.org/packages/b7/ce/149a00dd41f10bc29e5921b496af8b574d8413afcd5e30dfa0ed46c2cc5e/six-1.17.0-py2.py3-none-any.whl",
+      "sha256": "4721f391ed90541fddacab5acf947aa0d3dc7d27b2e1e8eda2be8970586c3274",
+      "size": 11050
+    },
+    {
+      "name": "msd-musicnn-1.pb",
+      "kind": "model",
+      "url": "https://essentia.upf.edu/models/feature-extractors/musicnn/msd-musicnn-1.pb",
+      "sha256": "cdea0722bcee7f731286843f2233e3aa69887bb5c3e2dce011eff55f38d04f3e",
+      "size": 3197999
+    },
+    {
+      "name": "mood_relaxed-msd-musicnn-1.pb",
+      "kind": "model",
+      "url": "https://essentia.upf.edu/models/classification-heads/mood_relaxed/mood_relaxed-msd-musicnn-1.pb",
+      "sha256": "1252d28ca7d2204e34e0cdf84a00aa2bc9627a87bdcf923df3aad39cfa69d2d9",
+      "size": 82458
+    },
+    {
+      "name": "mood_happy-msd-musicnn-1.pb",
+      "kind": "model",
+      "url": "https://essentia.upf.edu/models/classification-heads/mood_happy/mood_happy-msd-musicnn-1.pb",
+      "sha256": "d7382bc60304ea4578c298222968cd8d600c31252c7bf3e90b1f728ebb3ec36d",
+      "size": 82458
+    },
+    {
+      "name": "mood_sad-msd-musicnn-1.pb",
+      "kind": "model",
+      "url": "https://essentia.upf.edu/models/classification-heads/mood_sad/mood_sad-msd-musicnn-1.pb",
+      "sha256": "a5e908cf7f59e8c379ff7c7d138dd85416985fddaebb5de14ca4193200411f61",
+      "size": 82458
+    },
+    {
+      "name": "mood_aggressive-msd-musicnn-1.pb",
+      "kind": "model",
+      "url": "https://essentia.upf.edu/models/classification-heads/mood_aggressive/mood_aggressive-msd-musicnn-1.pb",
+      "sha256": "3b6eb5645e4b47a2ceb28ef3f8612f224640c583048770791b9fc6e8e5627a67",
+      "size": 82458
+    },
+    {
+      "name": "danceability-msd-musicnn-1.pb",
+      "kind": "model",
+      "url": "https://essentia.upf.edu/models/classification-heads/danceability/danceability-msd-musicnn-1.pb",
+      "sha256": "874a4b86afc9e12de3f15a47baf9ff1ac676ace109c56203e26103f2259eb95e",
+      "size": 82458
+    },
+    {
+      "name": "voice_instrumental-msd-musicnn-1.pb",
+      "kind": "model",
+      "url": "https://essentia.upf.edu/models/classification-heads/voice_instrumental/voice_instrumental-msd-musicnn-1.pb",
+      "sha256": "eb762cc7ee6751b2ea32179d3716e2d60a1d1a9e615b7e3b8be8a6f79d71675e",
+      "size": 82458
+    }
+  ],
+  "heads": {
+    "relaxed": {
+      "file": "mood_relaxed-msd-musicnn-1.pb",
+      "index": 1,
+      "output": "model/Softmax",
+      "classes": [
+        "non_relaxed",
+        "relaxed"
+      ]
+    },
+    "happy": {
+      "file": "mood_happy-msd-musicnn-1.pb",
+      "index": 0,
+      "output": "model/Softmax",
+      "classes": [
+        "happy",
+        "non_happy"
+      ]
+    },
+    "sad": {
+      "file": "mood_sad-msd-musicnn-1.pb",
+      "index": 1,
+      "output": "model/Softmax",
+      "classes": [
+        "non_sad",
+        "sad"
+      ]
+    },
+    "aggressive": {
+      "file": "mood_aggressive-msd-musicnn-1.pb",
+      "index": 0,
+      "output": "model/Softmax",
+      "classes": [
+        "aggressive",
+        "not_aggressive"
+      ]
+    },
+    "danceable": {
+      "file": "danceability-msd-musicnn-1.pb",
+      "index": 0,
+      "output": "model/Softmax",
+      "classes": [
+        "danceable",
+        "not_danceable"
+      ]
+    },
+    "instrumental": {
+      "file": "voice_instrumental-msd-musicnn-1.pb",
+      "index": 0,
+      "output": "model/Softmax",
+      "classes": [
+        "instrumental",
+        "voice"
+      ]
+    }
+  },
+  "embedding": "msd-musicnn-1.pb"
+}

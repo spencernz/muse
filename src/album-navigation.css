@@ -1,0 +1,34 @@
+/* Transition clones are a clipped, inert projection of the main content only. */
+.album-motion-layer {
+  position: fixed;
+  z-index: 40;
+  overflow: clip;
+  pointer-events: none;
+  perspective: 900px;
+  contain: layout paint;
+}
+.album-motion-art,
+.album-motion-tile {
+  transform-origin: center center;
+  backface-visibility: hidden;
+  will-change: transform, opacity;
+  pointer-events: none;
+}
+.album-motion-art {
+  z-index: 2;
+  transform-origin: top left;
+}
+.album-motion-tile {
+  z-index: 1;
+}
+.album-motion-layer .artwork {
+  background: #393342;
+}
+.album-motion-art img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.album-motion-art::after {
+  display: none;
+}

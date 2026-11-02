@@ -1,0 +1,33 @@
+/* Full-bleed artwork with a stable caption; only images change during rotation. */
+.playlist-card.playlist-collage-card { padding: 0; background: var(--muse-raised); isolation: isolate; }
+.playlist-mosaic { position: absolute; inset: 0; display: grid; grid-template-columns: repeat(6,minmax(0,1fr)); grid-template-rows: repeat(6,minmax(0,1fr)); overflow: hidden; }
+.playlist-mosaic-cell { position: relative; overflow: hidden; min-width: 0; min-height: 0; background: #222; }
+.playlist-mosaic-cell img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.collage-image-in { animation: collage-crossfade 180ms ease-out both; }
+.mosaic-1 > :nth-child(1) { grid-area: 1 / 1 / 7 / 7; }
+.mosaic-2 > :nth-child(1) { grid-area: 1 / 1 / 7 / 4; }
+.mosaic-2 > :nth-child(2) { grid-area: 1 / 4 / 7 / 7; }
+.mosaic-3 > :nth-child(1) { grid-area: 1 / 1 / 7 / 4; }
+.mosaic-3 > :nth-child(2) { grid-area: 1 / 4 / 4 / 7; }
+.mosaic-3 > :nth-child(3) { grid-area: 4 / 4 / 7 / 7; }
+.mosaic-4 > :nth-child(1) { grid-area: 1 / 1 / 5 / 5; }
+.mosaic-4 > :nth-child(2) { grid-area: 1 / 5 / 4 / 7; }
+.mosaic-4 > :nth-child(3) { grid-area: 4 / 5 / 7 / 7; }
+.mosaic-4 > :nth-child(4) { grid-area: 5 / 1 / 7 / 5; }
+.mosaic-5 > :nth-child(1) { grid-area: 1 / 1 / 4 / 4; }
+.mosaic-5 > :nth-child(2) { grid-area: 1 / 4 / 4 / 7; }
+.mosaic-5 > :nth-child(3) { grid-area: 4 / 1 / 7 / 3; }
+.mosaic-5 > :nth-child(4) { grid-area: 4 / 3 / 7 / 5; }
+.mosaic-5 > :nth-child(5) { grid-area: 4 / 5 / 7 / 7; }
+/* Reflections vary composition without distorting any cover image. */
+.mosaic-variant-1 { transform: scaleX(-1); }
+.mosaic-variant-1 .playlist-mosaic-cell { transform: scaleX(-1); }
+.mosaic-variant-2 { transform: scaleY(-1); }
+.mosaic-variant-2 .playlist-mosaic-cell { transform: scaleY(-1); }
+.playlist-collage-caption { z-index: 1; width: 100%; margin-top: auto; padding: 12px 14px; background: #111111e8; color: #eee; }
+.playlist-collage-caption h2 { font-size: 16px; margin: 0 0 6px; }
+.playlist-collage-caption p { color: #bcbcbc; opacity: 1; }
+.playlist-collage-card .playlist-collage-fallback { top: 18px; left: 18px; color: #aaa; }
+.playlist-collage-card:focus-visible { outline-offset: -3px; }
+@keyframes collage-crossfade { from {opacity: 0;} to {opacity: 1;} }
+@media (prefers-reduced-motion: reduce) { .collage-image-in { animation: none; } }

@@ -1,0 +1,15 @@
+/* Native gutters take no space; activity indicators are painted over content. */
+:root.muse-auto-scrollbars * { scrollbar-width: none; scrollbar-gutter: auto; }
+.muse-auto-scrollbars ::-webkit-scrollbar { display: none; width: 0; height: 0; }
+.muse-scroll-indicator {
+  position: fixed;
+  z-index: 1000;
+  background: #ffffff66;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  touch-action: none;
+  user-select: none;
+  cursor: default;
+}
+.muse-scroll-indicator:hover { background-color: #ffffff99; }
+.muse-scroll-indicator[hidden] { display: none; }

@@ -1,0 +1,45 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Muse",
+  "version": "0.1.0",
+  "identifier": "local.muse.player",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "devUrl": "http://127.0.0.1:1420",
+    "beforeBuildCommand": "npm run build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "Muse",
+        "titleBarStyle": "Overlay",
+        "hiddenTitle": true,
+        "width": 1180,
+        "height": 800,
+        "minWidth": 620,
+        "minHeight": 590,
+        "backgroundColor": "#151515"
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' asset: http://asset.localhost data:; connect-src ipc: http://ipc.localhost; media-src 'none'",
+      "assetProtocol": { "enable": true, "scope": ["$APPDATA/artwork/**"] }
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["app"],
+    "category": "Music",
+    "shortDescription": "Your personal music space",
+    "copyright": "Copyright © 2026 Spencer Hu",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ]
+  }
+}

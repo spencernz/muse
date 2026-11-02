@@ -1,0 +1,5 @@
+import {invoke} from '@tauri-apps/api/core';
+export interface MusicProfile {relaxed:number;happy:number;sad:number;aggressive:number;danceable:number;instrumental:number;energy:number;confidence:number;tempo:number|null;sampleSeconds:number;modelVersion:string}
+export interface AnalysisStatus {supported:boolean;installed:boolean;running:boolean;enabled:boolean;total:number;analysed:number;completed:number;skipped:number;failed:number;message:string;error:string|null}
+export interface ProfileReview {id:string;title:string;artist:string;profile:MusicProfile;overrides:Record<string,boolean>}
+export const musicAnalysis={status:()=>invoke<AnalysisStatus>('music_analysis_status'),start:(mode:'install'|'pilot'|'remaining')=>invoke<AnalysisStatus>('music_analysis_start',{mode}),cancel:()=>invoke<void>('music_analysis_cancel'),background:(enabled:boolean)=>invoke<AnalysisStatus>('music_analysis_background',{enabled}),review:()=>invoke<ProfileReview[]>('music_analysis_review'),correct:(id:string,mood:string,include:boolean|null)=>invoke<void>('music_analysis_correct',{id,mood,include})};
