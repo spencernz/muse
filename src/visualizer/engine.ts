@@ -19,7 +19,7 @@ export class VisualizerEngine {
   const fire=this.preferences.effect==='fire';this.atmosphere.width=fire?size.width:1;this.atmosphere.height=fire?size.height:1;this.retro?.resize(this.width,this.height,this.quality);
  }
  private draw=(now:number)=>{
-  if(this.destroyed)return;this.frame=requestAnimationFrame(this.draw);const signal=audioAnalyzer.processor.signals,effect=this.preferences.effect;const ambient=effect==='chalk';const minFrame=this.reduced?80:(signal.live||ambient)?15:100;
+  if(this.destroyed)return;this.frame=requestAnimationFrame(this.draw);const signal=audioAnalyzer.processor.signals,effect=this.preferences.effect;const minFrame=this.reduced?80:signal.live?15:100;
   if(now-this.last<minFrame)return;const dt=Math.min(.1,(now-this.last)/1000||.016);this.last=now;audioAnalyzer.processor.step(dt);if(!this.reduced&&signal.live)this.time+=dt;
   this.fade=Math.min(1,this.fade+dt*7);this.canvas.style.opacity=String(this.fade);this.atmosphere.style.opacity=String(this.fade);
   const start=performance.now(),atmospheric=effect==='fire';
@@ -30,10 +30,9 @@ export class VisualizerEngine {
   if(effect==='retro'&&!this.reduced){this.retro??=new RetroRenderer(this.canvas,this.report);this.retro.resize(this.width,this.height,this.quality);retro=this.retro.draw(dt,signal.live,audioAnalyzer.processor.pcm);}
   if(effect==='retro'&&this.reduced)this.report('Reduced motion · calm Spectrum');
   if(retro){this.context.clearRect(0,0,this.width,this.height);}else this.effects.draw(effect==='retro'?'spectrum':effect,{ctx:this.context,width:this.width,height:this.height,time:this.time,dt,signals:signal,palette:this.palette,intensity:effect==='retro'?1:this.preferences.intensity,reduced:this.reduced,quality:this.quality},gpu);
-  if(ambient)this.report(this.effects.status(effect));
   const cost=performance.now()-start;
   // Measure both JS draw cost and delivered frames (GPU load can stall the next RAF).
-  if(cost>22||(!this.reduced&&(signal.live||ambient)&&dt>.026)){this.fast=0;if(++this.slow>45&&this.quality>.3){this.quality=Math.max(.3,this.quality*.8);this.slow=0;this.resize();}}
+  if(cost>22||(!this.reduced&&signal.live&&dt>.026)){this.fast=0;if(++this.slow>45&&this.quality>.3){this.quality=Math.max(.3,this.quality*.8);this.slow=0;this.resize();}}
   else {this.slow=Math.max(0,this.slow-1);if(cost<9&&dt<.021&&++this.fast>600&&this.quality<1){this.quality=Math.min(1,this.quality*1.1);this.fast=0;this.resize();}}
  };
  dispose(){this.destroyed=true;cancelAnimationFrame(this.frame);this.observer.disconnect();this.gpu?.dispose();this.retro?.dispose();this.effects.dispose();this.canvas.width=this.canvas.height=1;this.atmosphere.width=this.atmosphere.height=1;}

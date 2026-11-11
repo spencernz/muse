@@ -1,4 +1,4 @@
-export const effects = ["spectrum", "wave", "retro", "fire", "chalk"] as const;
+export const effects = ["spectrum", "wave", "retro", "fire"] as const;
 export type EffectMode = typeof effects[number];
 export const themes = ["album", "aurora", "ember", "ice", "mono"] as const;
 export type ColourTheme = typeof themes[number];

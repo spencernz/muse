@@ -1,15 +1,15 @@
-import { ChevronDown, Expand, Maximize2, Minimize2, X } from 'lucide-react';
+import { Expand, Maximize2, Minimize2, SlidersHorizontal, X } from 'lucide-react';
 import { listen } from '@tauri-apps/api/event';
 import { native } from '../native';
 import { VisualFullscreenSession } from '../visualizer/fullscreen';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { audioAnalyzer } from '../visualizer/audio-analyzer';
 import { VisualizerEngine } from '../visualizer/engine';
 import { loadPreferences, savePreferences, shuffledEffect } from '../visualizer/preferences';
 import { paletteFor } from '../visualizer/palettes';
 import { effects, themes, type AnalysisStatus, type VisualPreferences } from '../visualizer/types';
 import { useAlbumAtmosphere } from '../use-album-atmosphere';
-const effectNames={spectrum:'Spectrum',wave:'Wave',retro:'Retro',fire:'Fire',chalk:'Chalk Zoo'};
+const effectNames={spectrum:'Spectrum',wave:'Wave',retro:'Retro',fire:'Fire'};
 const themeNames={album:'Album adaptive',aurora:'Aurora',ember:'Ember',ice:'Ice',mono:'Monochrome'};
 const statusNames:Record<AnalysisStatus,string>={starting:'Waiting for audio…',live:'Live audio',paused:'Paused',stale:'Audio signal interrupted · playback is unaffected',unavailable:'Ambient preview · audio analysis is unavailable'};
 export function VisualEffectsTab({source,expanded=false,onExpandedChange}:{source?:string;expanded?:boolean;onExpandedChange?:(value:boolean)=>void}){
@@ -49,6 +49,11 @@ export function VisualEffectsTab({source,expanded=false,onExpandedChange}:{sourc
   return()=>{stop();engine.current?.dispose();engine.current=null;};
  },[visible]);
  useEffect(()=>{if(!preferences.auto||!visible||reduced)return;const timer=setInterval(()=>setPreferences(previous=>{const next={...previous,effect:shuffledEffect(previous.effect)};savePreferences(next);return next;}),30000);return()=>clearInterval(timer);},[preferences.auto,visible,reduced]);
+ const [settingsOpen,setSettingsOpen]=useState(false),settingsId=useId(),settingsRoot=useRef<HTMLDivElement>(null),settingsButton=useRef<HTMLButtonElement>(null);
+ useEffect(()=>{if(!settingsOpen)return;function outside(event:PointerEvent){if(settingsRoot.current&&!event.composedPath().includes(settingsRoot.current))setSettingsOpen(false);}document.addEventListener('pointerdown',outside);return()=>document.removeEventListener('pointerdown',outside);},[settingsOpen]);
+ const tunable=preferences.effect!=='retro';
+ const statusText=diagnostic??(status==='live'?null:statusNames[status]);
+ const statusLine=[statusText,fallback?'Canvas mode':null,reduced?'Reduced motion':null].filter(Boolean).join(' · ');
  return <dialog open className={`visual-effects ${fullscreen?'visual-effects--fullscreen':''}`} ref={host} role={fullscreen?'dialog':'region'} aria-modal={fullscreen?true:undefined} aria-label={fullscreen?'Fullscreen visual effects':'Visual effects'} onCancel={event=>{event.preventDefault();void closeFullscreen();}}>
   <div className="visual-display-actions">
    {fullscreen?<button className="iconbtn" aria-label="Close fullscreen visual" title="Close fullscreen visual" onClick={()=>void closeFullscreen()}><X size={24}/></button>:<>
@@ -59,11 +64,20 @@ export function VisualEffectsTab({source,expanded=false,onExpandedChange}:{sourc
   {displayError&&<p className="visual-display-error" role="alert">{displayError}</p>}
   <div className="visual-stage" role="img" aria-label={`${effectNames[preferences.effect]} music visualization`}>
    <canvas ref={atmosphere} aria-hidden="true"/><canvas ref={canvas} aria-hidden="true"/>
-   <span className="visual-status" role="status">{diagnostic??statusNames[status]}{fallback?' · Canvas mode':''}{reduced?' · Reduced motion':''}</span>
+   <span className="visual-status" role="status" hidden={!statusLine}>{statusLine}</span>
   </div>
   <div className="visual-controls">
    <div className="visual-modes" role="group" aria-label="Visual effect">{effects.map(effect=><button key={effect} aria-pressed={preferences.effect===effect} onClick={()=>update({effect})}>{effectNames[effect]}</button>)}</div>
-   <div className="visual-options">{!["chalk","retro"].includes(preferences.effect)&&<><label>Energy <input aria-label="Visual energy" type="range" min="0.25" max="2" step="0.05" value={preferences.intensity} onChange={event=>update({intensity:Number(event.target.value)})}/></label><label>Colour <span className="visual-select"><select value={preferences.theme} onChange={event=>update({theme:event.target.value as VisualPreferences['theme']})}>{themes.map(theme=><option key={theme} value={theme}>{themeNames[theme]}</option>)}</select><ChevronDown size={14} aria-hidden="true"/></span></label></>}<label className="visual-auto"><input type="checkbox" checked={preferences.auto} onChange={event=>update({auto:event.target.checked})}/>Shuffle effects</label></div>
+   <div className="visual-tools">
+    {tunable&&<div className="visual-swatches" role="radiogroup" aria-label="Colour">{themes.map(theme=>{const [a,b]=paletteFor(theme,album.accent);return <button key={theme} role="radio" aria-checked={preferences.theme===theme} aria-label={themeNames[theme]} title={themeNames[theme]} style={{background:`linear-gradient(135deg, ${a} 0 50%, ${b} 50% 100%)`}} onClick={()=>update({theme})}/>;})}</div>}
+    <div className="visual-settings" ref={settingsRoot} onKeyDown={event=>{if(settingsOpen&&event.key==='Escape'){event.preventDefault();event.stopPropagation();setSettingsOpen(false);settingsButton.current?.focus();}}}>
+     <button ref={settingsButton} className="iconbtn" aria-label="Visual settings" title="Visual settings" aria-haspopup="dialog" aria-expanded={settingsOpen} aria-controls={settingsOpen?settingsId:undefined} onClick={()=>setSettingsOpen(value=>!value)}><SlidersHorizontal size={16}/></button>
+     {settingsOpen&&<div className="visual-settings-panel" id={settingsId} role="dialog" aria-label="Visual settings">
+      {tunable&&<label className="visual-energy">Energy<input aria-label="Visual energy" type="range" min="0.25" max="2" step="0.05" value={preferences.intensity} onChange={event=>update({intensity:Number(event.target.value)})}/></label>}
+      <label className="visual-auto"><input type="checkbox" checked={preferences.auto} onChange={event=>update({auto:event.target.checked})}/>Shuffle effects</label>
+     </div>}
+    </div>
+   </div>
   </div>
  </dialog>;
 }

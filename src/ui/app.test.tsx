@@ -974,10 +974,13 @@ it("switches to lyrics without replacing playback and supports keyboard tabs", a
   expect(await screen.findByText(/Lyrics aren’t available/)).toBeVisible();
   expect(api.lyrics).toHaveBeenCalledWith(song.id);
   expect(screen.queryByRole("heading",{name:song.title})).not.toBeInTheDocument();
-  expect(screen.getByRole("slider",{name:"Playback position"})).toBeVisible();
+  expect(screen.queryByRole("slider",{name:"Playback position"})).not.toBeInTheDocument();
+  expect(screen.queryByRole("group",{name:"Now Playing controls"})).not.toBeInTheDocument();
   await user.keyboard("{ArrowLeft}");
   expect(screen.getByRole("tab",{name:"NOW PLAYING"})).toHaveFocus();
   expect(screen.getByRole("heading",{name:song.title})).toBeVisible();
+  expect(screen.getByRole("slider",{name:"Playback position"})).toBeVisible();
+  expect(screen.getByRole("group",{name:"Now Playing controls"})).toBeVisible();
 });
 
 it("shows artist albums above songs and opens an album from the artist collection", async()=>{
@@ -1012,8 +1015,19 @@ it('expands visuals with outer gutters while other Now Playing tabs retain their
  vi.mocked(api.visualizerActive).mockResolvedValue();vi.mocked(api.visualizerFrame).mockResolvedValue({trackId:song.id,epoch:1,sequence:0,available:false,playing:false,bands:[],waveform:[],rms:0,bass:0,mids:0,treble:0});
  const context=vi.spyOn(HTMLCanvasElement.prototype,'getContext').mockReturnValue(null);
  try{
-  act(()=>useMuse.setState({page:'now',playback:{...emptyPlayback,current:song,queue:[song.id]}}));const user=userEvent.setup();const {container}=render(<App/>);await user.click(screen.getByRole('tab',{name:'VISUAL EFFECTS'}));await user.click(screen.getByRole('button',{name:'Expand visual width'}));expect(container.querySelector('.now-page')).toHaveClass('now-page--visual-wide');expect(container.querySelector('.now-artwork')).toHaveAttribute('hidden');expect(screen.getByRole('slider',{name:'Playback position'})).toBeVisible();
+  act(()=>useMuse.setState({page:'now',playback:{...emptyPlayback,current:song,queue:[song.id]}}));const user=userEvent.setup();const {container}=render(<App/>);await user.click(screen.getByRole('tab',{name:'VISUAL EFFECTS'}));await user.click(screen.getByRole('button',{name:'Expand visual width'}));expect(container.querySelector('.now-page')).toHaveClass('now-page--visual-wide');expect(container.querySelector('.now-artwork')).toHaveAttribute('hidden');expect(screen.queryByRole('slider',{name:'Playback position'})).not.toBeInTheDocument();expect(screen.queryByRole('group',{name:'Now Playing controls'})).not.toBeInTheDocument();
   await user.click(screen.getByRole('tab',{name:'NOW PLAYING'}));expect(container.querySelector('.now-page')).not.toHaveClass('now-page--visual-wide');expect(container.querySelector('.now-artwork')).not.toHaveAttribute('hidden');
   await user.click(screen.getByRole('tab',{name:'VISUAL EFFECTS'}));expect(container.querySelector('.now-page')).toHaveClass('now-page--visual-wide');await user.click(screen.getByRole('button',{name:'Restore visual width'}));expect(container.querySelector('.now-artwork')).not.toHaveAttribute('hidden');
  }finally{context.mockRestore();}
+});
+
+it("names the next queued track under the Now Playing artwork only when one exists",async()=>{
+ const following={...song,id:"next-song",title:"Following Song"};
+ vi.mocked(api.getTracks).mockImplementation(async ids=>ids.map(id=>id===following.id?following:song));
+ act(()=>useMuse.setState({page:"now",playback:{...emptyPlayback,current:song,queue:[song.id,following.id],index:0}}));
+ const {container}=render(<App/>);
+ expect(await screen.findByText("Up next · Following Song")).toBeVisible();
+ expect(container.querySelector(".now-artwork")).toContainElement(screen.getByText("Up next · Following Song"));
+ act(()=>useMuse.setState({playback:{...useMuse.getState().playback,index:1}}));
+ await waitFor(()=>expect(screen.queryByText(/Up next/)).not.toBeInTheDocument());
 });

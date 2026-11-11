@@ -3,25 +3,36 @@
 .visual-stage{position:relative;flex:1;min-height:180px;background:#080b11;overflow:hidden}
 .visual-stage canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
 .visual-status{position:absolute;left:12px;bottom:10px;font-size:11px;letter-spacing:.04em;color:#d4d7de;background:#080b1199;padding:3px 5px;max-width:calc(100% - 24px)}
-.visual-controls{flex:none;display:flex;flex-direction:column;gap:8px}
-.visual-modes{display:flex;gap:2px}.visual-modes button{flex:1;font-size:14px;min-height:40px;padding:8px 4px;min-width:0;background:transparent;color:var(--now-muted);border-bottom:2px solid transparent;transition:color 160ms,background 160ms}
-.visual-modes button[aria-pressed=true]{color:#f8f7fa;border-bottom-color:var(--now-accent);background:#ffffff0a}
+.visual-controls{flex:none;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px 16px}
+.visual-modes{display:flex;gap:4px}.visual-modes button{font-size:13px;min-height:36px;padding:0 14px;min-width:0;border:1px solid transparent;border-radius:0;background:transparent;color:var(--now-muted);transition:color 160ms,background 160ms,border-color 160ms}
+.visual-modes button[aria-pressed=true]{color:#f8f7fa;border-color:#f8f7fa66;background:#f8f7fa1f}
 .visual-modes button:hover{background:#ffffff12;color:#f8f7fa}
-.visual-options{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:4px;font-size:12px;color:var(--now-muted)}
+.visual-tools{display:flex;align-items:center;gap:12px;margin-left:auto}
+.visual-swatches{display:flex;gap:6px}
+.visual-swatches button{width:28px;height:28px;min-height:0;padding:0;border:2px solid #f8f7fa33;border-radius:0}
+.visual-swatches button[aria-checked=true]{border-color:#f8f7fa}
+.visual-swatches button:hover{border-color:#f8f7fa99}
+.visual-swatches button:focus-visible,.visual-settings .iconbtn:focus-visible{outline:2px solid var(--now-accent);outline-offset:2px}
+.visual-settings{position:relative}
+.visual-settings .iconbtn{width:36px;height:36px;padding:0;display:grid;place-items:center;border:1px solid #f8f7fa40;border-radius:0;background:transparent;color:#f8f7fa}
+.visual-settings .iconbtn[aria-expanded=true],.visual-settings .iconbtn:hover{background:#ffffff1f}
+.visual-settings-panel{position:absolute;z-index:30;right:0;bottom:calc(100% + 8px);width:min(260px,calc(100vw - 32px));box-sizing:border-box;padding:16px;display:flex;flex-direction:column;gap:14px;border:1px solid var(--now-muted);background:var(--now-background);box-shadow:0 8px 24px #0005;font-size:13px;color:#f8f7facc}
+.visual-energy{display:flex;flex-direction:column;gap:8px}.visual-energy input{width:100%}
+.visual-auto{display:flex;align-items:center;gap:8px;white-space:nowrap}.visual-auto input{width:16px;height:16px}
 .visual-options label{display:flex;align-items:center;gap:8px}.visual-options input[type=range]{width:76px;min-width:40px;height:20px}.visual-select{position:relative;display:inline-flex;min-width:0}.visual-select svg{position:absolute;right:8px;top:50%;transform:translateY(-50%);pointer-events:none}.visual-options select{appearance:none;-webkit-appearance:none;border:1px solid #ffffff40;border-radius:0;background:#ffffff08;color:#f8f7fa;max-width:150px;padding:6px 28px 6px 10px;font-size:12px;line-height:20px;height:36px}.visual-options .visual-auto{margin-left:auto;white-space:nowrap}.visual-auto input{width:14px;height:14px}
 .now-tabs{flex-wrap:wrap;gap:20px}.now-tabs button{white-space:nowrap}
-@media(max-width:850px){.visual-options{gap:8px}.visual-options select{max-width:130px}.now-tabs{gap:12px}.now-tabs button{font-size:11px;letter-spacing:.12em}}
+@media(max-width:850px){.now-tabs{gap:12px}.now-tabs button{font-size:11px;letter-spacing:.12em}}
 
 .now-view-panel .visual-effects{height:clamp(360px,45vh,460px)}
 @media(max-width:600px){.now-view-panel .visual-effects{height:420px}.now-view-panel .lyrics-panel{height:420px}}
 .auto-sync-settings{margin-block:16px 24px}.auto-sync-settings label{display:flex;align-items:center;gap:8px}.auto-sync-settings input[type=checkbox]{width:16px;height:16px}.auto-sync-settings select{height:36px;padding:4px 8px}
 
-.visual-options select:focus-visible{outline:2px solid var(--now-accent);outline-offset:2px}
-@media(prefers-reduced-motion:reduce){.visual-modes button{transition:none}}
+@media(prefers-reduced-motion:reduce){.visual-modes button,.visual-display-actions{transition:none}}
 
 /* Promote the existing canvas container into the top layer without remounting it. */
 dialog.visual-effects{position:relative;width:100%;max-width:none;max-height:none;margin:0;padding:0;border:0;color:inherit;background:transparent}
-.visual-display-actions{position:absolute;top:8px;right:8px;display:flex;gap:4px;z-index:2}
+.visual-display-actions{position:absolute;top:8px;right:8px;display:flex;gap:4px;z-index:2;opacity:.55;transition:opacity 160ms}
+.visual-effects:hover .visual-display-actions,.visual-display-actions:focus-within,.visual-effects--fullscreen .visual-display-actions{opacity:1}
 .visual-display-actions .iconbtn{width:40px;height:40px;border:1px solid transparent;background:transparent;color:#f8f7fa;border-radius:0}
 .visual-display-actions .iconbtn:hover{background:#ffffff1a;border-color:#ffffff40}
 .visual-display-actions .iconbtn:focus-visible{outline:2px solid var(--now-accent);outline-offset:2px}
@@ -37,4 +48,4 @@ dialog.visual-effects--fullscreen{position:fixed;inset:0;width:100vw;height:100d
 .now-page--visual-wide .now-view-panels{min-height:clamp(380px,55vh,680px)}
 .now-page--visual-wide .visual-effects{height:clamp(380px,55vh,680px)}
 @media(max-width:600px){.visual-display-actions .iconbtn{width:44px;height:44px}.now-page--visual-wide .now-main{padding-inline:16px}.now-page--visual-wide .visual-effects{height:460px}}
-@media(max-width:600px){.visual-modes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}.visual-modes button{min-height:44px}}
+@media(max-width:600px){.visual-modes{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));width:100%}.visual-modes button{min-height:44px;padding:0 4px}.visual-tools{margin-left:0}.visual-swatches button{width:32px;height:32px}.visual-settings .iconbtn{width:44px;height:44px}}

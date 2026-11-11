@@ -1,4 +1,4 @@
-import {cleanup,fireEvent,render,screen,waitFor} from '@testing-library/react';
+import {cleanup,fireEvent,render,screen,waitFor,within} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {afterEach,beforeEach,expect,it,vi} from 'vitest';
 import {api} from '../native';
@@ -12,9 +12,11 @@ vi.mock('../visualizer/audio-analyzer',()=>({audioAnalyzer:{subscribe:(listener:
 vi.mock('../visualizer/engine',()=>({VisualizerEngine:class{constructor(){state.construct();}update=state.update;dispose=state.dispose;}}));
 afterEach(()=>{cleanup();vi.clearAllMocks();localStorage.clear();vi.restoreAllMocks();});
 it('switches all modes and themes without recreating audio analysis or graphics resources',async()=>{
- const user=userEvent.setup();render(<VisualEffectsTab/>);expect(screen.getByRole('status')).toHaveTextContent('Live audio');
- for(const name of ['Wave','Retro','Fire','Chalk Zoo','Spectrum'])await user.click(screen.getByRole('button',{name}));
- await user.selectOptions(screen.getByRole('combobox'),'ice');fireEvent.change(screen.getByRole('slider',{name:'Visual energy'}),{target:{value:'1.5'}});
+ const user=userEvent.setup();render(<VisualEffectsTab/>);expect(screen.queryByText('Live audio')).not.toBeInTheDocument();
+ expect(within(screen.getByRole('group',{name:'Visual effect'})).getAllByRole('button').map(button=>button.textContent)).toEqual(['Spectrum','Wave','Retro','Fire']);
+ for(const name of ['Wave','Retro','Fire','Spectrum'])await user.click(screen.getByRole('button',{name}));
+ await user.click(screen.getByRole('radio',{name:'Ice'}));expect(screen.getByRole('radio',{name:'Ice'})).toHaveAttribute('aria-checked','true');
+ await user.click(screen.getByRole('button',{name:'Visual settings'}));fireEvent.change(screen.getByRole('slider',{name:'Visual energy'}),{target:{value:'1.5'}});
  expect(state.start).toHaveBeenCalledTimes(1);expect(state.construct).toHaveBeenCalledTimes(1);expect(state.dispose).not.toHaveBeenCalled();expect(JSON.parse(localStorage.getItem('muse.visual-effects.v1')!)).toMatchObject({effect:'spectrum',theme:'ice',intensity:1.5});
  cleanup();expect(state.stop).toHaveBeenCalledTimes(1);expect(state.dispose).toHaveBeenCalledTimes(1);
 });
@@ -26,11 +28,11 @@ it('stops native analysis and graphics while the document is hidden and resumes 
 it('shuffles to another effect every 30 seconds with a clear label and preserves the saved flag',async()=>{
  vi.useFakeTimers();vi.spyOn(Math,'random').mockReturnValue(.9);
  try{
-  render(<VisualEffectsTab/>);fireEvent.click(screen.getByRole('checkbox',{name:'Shuffle effects'}));
+  render(<VisualEffectsTab/>);fireEvent.click(screen.getByRole('button',{name:'Visual settings'}));fireEvent.click(screen.getByRole('checkbox',{name:'Shuffle effects'}));
   const {act}=await import('@testing-library/react');await act(()=>vi.advanceTimersByTimeAsync(30000));
-  expect(screen.getByRole('button',{name:'Chalk Zoo'})).toHaveAttribute('aria-pressed','true');expect(JSON.parse(localStorage.getItem('muse.visual-effects.v1')!)).toMatchObject({effect:'chalk',auto:true});
-  await act(()=>vi.advanceTimersByTimeAsync(30000));expect(screen.getByRole('button',{name:'Fire'})).toHaveAttribute('aria-pressed','true');expect(state.construct).toHaveBeenCalledTimes(1);
-  fireEvent.click(screen.getByRole('checkbox',{name:'Shuffle effects'}));await act(()=>vi.advanceTimersByTimeAsync(30000));expect(screen.getByRole('button',{name:'Fire'})).toHaveAttribute('aria-pressed','true');
+  expect(screen.getByRole('button',{name:'Fire'})).toHaveAttribute('aria-pressed','true');expect(JSON.parse(localStorage.getItem('muse.visual-effects.v1')!)).toMatchObject({effect:'fire',auto:true});
+  await act(()=>vi.advanceTimersByTimeAsync(30000));expect(screen.getByRole('button',{name:'Retro'})).toHaveAttribute('aria-pressed','true');expect(state.construct).toHaveBeenCalledTimes(1);
+  fireEvent.click(screen.getByRole('checkbox',{name:'Shuffle effects'}));await act(()=>vi.advanceTimersByTimeAsync(30000));expect(screen.getByRole('button',{name:'Retro'})).toHaveAttribute('aria-pressed','true');
  }finally{vi.useRealTimers();}
 });
 
@@ -48,6 +50,11 @@ it('handles Escape and preserves a pre-existing native fullscreen window',async(
 it('restores the inline visual and reports failure when native fullscreen entry fails',async()=>{
  vi.mocked(api.enterFullscreen).mockRejectedValueOnce('unavailable');const user=userEvent.setup();render(<VisualEffectsTab/>);await user.click(screen.getByRole('button',{name:'Fullscreen visual'}));await waitFor(()=>expect(screen.queryByRole('dialog',{name:'Fullscreen visual effects'})).not.toBeInTheDocument());expect(screen.getByRole('alert')).toHaveTextContent('Could not open fullscreen');expect(screen.getByRole('button',{name:'Fullscreen visual'})).toBeEnabled();
 });
-it('keeps Chalk Zoo automatic with no energy or colour tuning controls',async()=>{
- const user=userEvent.setup();render(<VisualEffectsTab/>);await user.click(screen.getByRole('button',{name:'Chalk Zoo'}));expect(screen.queryByRole('slider',{name:'Visual energy'})).not.toBeInTheDocument();expect(screen.queryByRole('combobox')).not.toBeInTheDocument();expect(screen.getByRole('button',{name:'Fullscreen visual'})).toBeEnabled();
+it('keeps Retro free of energy and colour tuning and closes visual settings with Escape',async()=>{
+ const user=userEvent.setup();render(<VisualEffectsTab/>);await user.click(screen.getByRole('button',{name:'Retro'}));expect(screen.queryByRole('radiogroup',{name:'Colour'})).not.toBeInTheDocument();
+ const settings=screen.getByRole('button',{name:'Visual settings'});await user.click(settings);expect(settings).toHaveAttribute('aria-expanded','true');expect(screen.queryByRole('slider',{name:'Visual energy'})).not.toBeInTheDocument();expect(screen.getByRole('checkbox',{name:'Shuffle effects'})).toBeVisible();
+ screen.getByRole('checkbox',{name:'Shuffle effects'}).focus();await user.keyboard('{Escape}');expect(screen.queryByRole('dialog',{name:'Visual settings'})).not.toBeInTheDocument();expect(settings).toHaveFocus();
+});
+it('migrates a saved Chalk Zoo effect to Wave',()=>{
+ localStorage.setItem('muse.visual-effects.v1',JSON.stringify({effect:'chalk',theme:'ice',intensity:1,auto:false}));render(<VisualEffectsTab/>);expect(screen.getByRole('button',{name:'Wave'})).toHaveAttribute('aria-pressed','true');expect(screen.queryByRole('button',{name:'Chalk Zoo'})).not.toBeInTheDocument();
 });

@@ -2,7 +2,7 @@ import { effects, themes, type EffectMode, type VisualPreferences } from "./type
 const key="muse.visual-effects.v1";
 export function validatePreferences(value:unknown):VisualPreferences {
  const v=(value&&typeof value==="object"?value:{}) as Partial<VisualPreferences>;
- return {effect:String(v.effect)==="storm"?"retro":["petals","nebula"].includes(String(v.effect))?"spectrum":effects.includes(v.effect!)?v.effect!:"spectrum",theme:themes.includes(v.theme!)?v.theme!:"album",intensity:typeof v.intensity==="number"&&Number.isFinite(v.intensity)?Math.max(.25,Math.min(2,v.intensity)):1,auto:v.auto===true};
+ return {effect:String(v.effect)==="chalk"?"wave":String(v.effect)==="storm"?"retro":["petals","nebula"].includes(String(v.effect))?"spectrum":effects.includes(v.effect!)?v.effect!:"spectrum",theme:themes.includes(v.theme!)?v.theme!:"album",intensity:typeof v.intensity==="number"&&Number.isFinite(v.intensity)?Math.max(.25,Math.min(2,v.intensity)):1,auto:v.auto===true};
 }
 export function loadPreferences():VisualPreferences { try{return validatePreferences(JSON.parse(localStorage.getItem(key)??"null"));}catch{return validatePreferences(null);} }
 export function savePreferences(value:VisualPreferences) {try{localStorage.setItem(key,JSON.stringify(value));}catch{/* Storage is optional; the player must remain usable. */}}

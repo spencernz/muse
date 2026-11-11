@@ -276,6 +276,26 @@ export function MiniPlayer() {
   );
 }
 
+function UpNext() {
+  const id = useMuse((s) => s.playback.queue[s.playback.index + 1]);
+  const [next, setNext] = useState<{ id: string; title: string }>();
+  useEffect(() => {
+    let active = true;
+    if (id)
+      void api
+        .getTracks([id])
+        .then((rows) => {
+          if (active && rows[0]) setNext({ id, title: rows[0].title });
+        })
+        .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [id]);
+  if (!id || next?.id !== id) return null;
+  return <p className="now-up-next">Up next · {next.title}</p>;
+}
+
 function Queue() {
   const ids = useMuse((s) => s.playback.queue),
     index = useMuse((s) => s.playback.index);
@@ -507,6 +527,8 @@ export function NowPlayingScreen() {
             title={track.album}
             artist={track.artist}
           />
+          {tab==="visuals" && <div className="now-caption"><div className="now-caption-title">{track.title}</div><div className="now-caption-artist">{track.artist}</div></div>}
+          <UpNext/>
         </div>
         <div className="now-information">
           <div className="now-tabs" role="tablist" aria-label="Now Playing views">
@@ -557,10 +579,10 @@ export function NowPlayingScreen() {
           </div>
           </div>
           </div>
-          <div className="now-playback">
+          {tab==="playing" && <div className="now-playback">
             <SeekBar key={track.id} showTime />
             <NowPlayingToolbar/>
-          </div>
+          </div>}
         </div>
       </div>
       <div

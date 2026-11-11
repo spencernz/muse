@@ -108,5 +108,4 @@ Muse is released under the [MIT License](LICENSE), © 2026 Spencer Hu.
 - **Lyrics** are fetched at runtime from [LRCLIB](https://lrclib.net) and are not stored in this repository.
 - **Retro visualizer:** uses [butterchurn](https://github.com/jberg/butterchurn) (MIT). Its MilkDrop presets come from the `butterchurn-presets` npm package and are compiled into `src/visualizer/retro-presets.ts` on `npm install`. That file is gitignored, so this repository does not redistribute preset content. Each preset remains the work of the artist named in its title. License texts ship in `public/licenses/`.
 - **Music profiles (optional):** the Essentia runtime (AGPL-3.0) and musicnn model weights (CC BY-NC-ND 4.0) are downloaded on demand from their publishers and are not part of this repository. The model weights are licensed for non-commercial use only, so any commercial use of Muse must leave this feature disabled.
-- **Visualizer artwork** in `public/visualizers/chalk-pals/` was generated for this project with an AI image tool; see `docs/cycles/2026-11-01-chalk-pals/artwork.md`.
 - npm and Cargo dependencies keep their own licenses.
