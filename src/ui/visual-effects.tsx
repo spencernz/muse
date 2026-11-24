@@ -9,7 +9,7 @@ import { loadPreferences, savePreferences, shuffledEffect } from '../visualizer/
 import { paletteFor } from '../visualizer/palettes';
 import { effects, themes, type AnalysisStatus, type VisualPreferences } from '../visualizer/types';
 import { useAlbumAtmosphere } from '../use-album-atmosphere';
-const effectNames={spectrum:'Spectrum',wave:'Wave',retro:'Retro',fire:'Fire',chalk:'Chalk Zoo'};
+const effectNames={spectrum:'Spectrum',wave:'Wave',retro:'Retro',fire:'Fire'};
 const themeNames={album:'Album adaptive',aurora:'Aurora',ember:'Ember',ice:'Ice',mono:'Monochrome'};
 const statusNames:Record<AnalysisStatus,string>={starting:'Waiting for audio…',live:'Live audio',paused:'Paused',stale:'Audio signal interrupted · playback is unaffected',unavailable:'Ambient preview · audio analysis is unavailable'};
 export function VisualEffectsTab({source,expanded=false,onExpandedChange}:{source?:string;expanded?:boolean;onExpandedChange?:(value:boolean)=>void}){
@@ -63,7 +63,7 @@ export function VisualEffectsTab({source,expanded=false,onExpandedChange}:{sourc
   </div>
   <div className="visual-controls">
    <div className="visual-modes" role="group" aria-label="Visual effect">{effects.map(effect=><button key={effect} aria-pressed={preferences.effect===effect} onClick={()=>update({effect})}>{effectNames[effect]}</button>)}</div>
-   <div className="visual-options">{!["chalk","retro"].includes(preferences.effect)&&<><label>Energy <input aria-label="Visual energy" type="range" min="0.25" max="2" step="0.05" value={preferences.intensity} onChange={event=>update({intensity:Number(event.target.value)})}/></label><label>Colour <span className="visual-select"><select value={preferences.theme} onChange={event=>update({theme:event.target.value as VisualPreferences['theme']})}>{themes.map(theme=><option key={theme} value={theme}>{themeNames[theme]}</option>)}</select><ChevronDown size={14} aria-hidden="true"/></span></label></>}<label className="visual-auto"><input type="checkbox" checked={preferences.auto} onChange={event=>update({auto:event.target.checked})}/>Shuffle effects</label></div>
+   <div className="visual-options">{preferences.effect!=="retro"&&<><label>Energy <input aria-label="Visual energy" type="range" min="0.25" max="2" step="0.05" value={preferences.intensity} onChange={event=>update({intensity:Number(event.target.value)})}/></label><label>Colour <span className="visual-select"><select value={preferences.theme} onChange={event=>update({theme:event.target.value as VisualPreferences['theme']})}>{themes.map(theme=><option key={theme} value={theme}>{themeNames[theme]}</option>)}</select><ChevronDown size={14} aria-hidden="true"/></span></label></>}<label className="visual-auto"><input type="checkbox" checked={preferences.auto} onChange={event=>update({auto:event.target.checked})}/>Shuffle effects</label></div>
   </div>
  </dialog>;
 }

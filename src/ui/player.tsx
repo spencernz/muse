@@ -2,12 +2,15 @@ import { useEffect, useId, useRef, useState, type CSSProperties } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import {
   ArrowDown,
+  AudioLines,
   ArrowUp,
   Heart,
   ListMusic,
   Maximize2,
+  Music2,
   Pause,
   Play,
+  Plus,
   Repeat,
   Repeat1,
   Shuffle,
@@ -216,11 +219,12 @@ function VolumePopover() {
     {open && <div className="now-volume-panel" id={id} role="dialog" aria-label="Volume controls"><VolumeControl rememberedVolume={rememberedVolume}/></div>}
   </div>;
 }
-function NowPlayingToolbar() {
+function NowPlayingToolbar({visual,onVisualChange}:{visual?:boolean;onVisualChange?:(value:boolean)=>void}) {
   return <div className="now-toolbar" role="group" aria-label="Now Playing controls">
     <VolumePopover/>
     <Transport expanded/>
     <div className="now-toolbar-end">
+      {onVisualChange&&<button className={`iconbtn ${visual?"active":""}`} aria-label="Visualizer" title={visual?"Hide visualizer":"Show visualizer"} aria-pressed={!!visual} onClick={()=>onVisualChange(!visual)}><AudioLines size={22}/></button>}
       <AudioOutputButton/>
       <button className="iconbtn" aria-label="Open playback queue" onClick={revealQueue}><ListMusic size={22}/></button>
     </div>
@@ -406,7 +410,7 @@ function Queue() {
   );
 }
 export function NowPlayingScreen() {
-  const [tab, setTab] = useState<"playing" | "visuals">("playing");
+  const [visual, setVisual] = useState(false);
   const track = useMuse((s) => s.playback.current),
     context = useMuse((s) => s.context),
     revision = useMuse((s) => s.revision);
@@ -481,12 +485,16 @@ export function NowPlayingScreen() {
       useMuse.getState().fail(e);
     }
   }
-  const tabs = [
-    ["playing", "Now playing"],
-    ["visuals", "Visual"],
-  ] as const;
+  const placeholder = (
+    <div className="now-placeholder" role="img" aria-label="No album artwork">
+      <Music2 aria-hidden="true" />
+    </div>
+  );
   return (
-    <article className="now-page" aria-label="Now Playing">
+    <article
+      className={`now-page ${visual ? "now-page--visual" : ""}`}
+      aria-label="Now Playing"
+    >
       {source && (
         <img
           key={source}
@@ -501,103 +509,87 @@ export function NowPlayingScreen() {
       )}
       <div className="now-atmosphere-overlay" aria-hidden="true" />
       <div className="now-main">
-        <div className="now-tabs" role="tablist" aria-label="Now Playing views">
-          {tabs.map(([value, label], index) => (
-            <button
-              key={value}
-              id={`now-tab-${value}`}
-              role="tab"
-              aria-selected={tab === value}
-              aria-controls="now-panel-view"
-              tabIndex={tab === value ? 0 : -1}
-              onClick={() => setTab(value)}
-              onKeyDown={(event) => {
-                if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
-                event.preventDefault();
-                const next =
-                  event.key === "Home"
-                    ? tabs[0][0]
-                    : event.key === "End"
-                      ? tabs[tabs.length - 1][0]
-                      : tabs[(index + 1) % tabs.length][0];
-                setTab(next);
-                document.getElementById(`now-tab-${next}`)?.focus();
-              }}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
         <div className="now-stage">
           <div className="now-left">
-            <div
-              id="now-panel-view"
-              className="now-view"
-              role="tabpanel"
-              aria-labelledby={`now-tab-${tab}`}
-            >
-              {tab === "visuals" ? (
+            <div className="now-view">
+              {visual ? (
                 <VisualEffectsTab source={source} />
               ) : (
                 <div className="now-artwork">
-                  <Cover
-                    key={cover}
-                    path={cover}
-                    title={track.album}
-                    artist={track.artist}
-                  />
+                  {cover ? (
+                    <Cover
+                      key={cover}
+                      path={cover}
+                      title={track.album}
+                      artist={track.artist}
+                    />
+                  ) : (
+                    placeholder
+                  )}
                 </div>
               )}
             </div>
             <div className="now-information">
-              <h1 className="now-title">{track.title}</h1>
-              <div className="now-artist">
+              <div className="now-thumb" aria-hidden="true">
+                {cover ? (
+                  <Cover key={cover} path={cover} title={track.album} />
+                ) : (
+                  placeholder
+                )}
+              </div>
+              <div className="now-text">
+                <h1 className="now-title">{track.title}</h1>
                 <button
-                  className="text-link"
+                  className="text-link now-artist"
                   onClick={() =>
                     useMuse.getState().navigate("artist", track.artist)
                   }
                 >
                   {track.artist}
                 </button>
+                <div className="now-metadata">
+                  <button
+                    className="text-link now-album"
+                    onClick={() =>
+                      useMuse.getState().navigate("album", track.albumId)
+                    }
+                  >
+                    {track.album}
+                  </button>
+                  {[track.year, track.genre]
+                    .filter(Boolean)
+                    .map((value) => ` · ${value}`)
+                    .join("")}
+                </div>
               </div>
-              <div className="now-metadata">
+              <div className="now-actions">
                 <button
-                  className="text-link now-album"
-                  onClick={() =>
-                    useMuse.getState().navigate("album", track.albumId)
-                  }
-                >
-                  {track.album}
-                </button>
-                {[track.year, track.genre, duration(track.duration)]
-                  .filter(Boolean)
-                  .map((value) => ` · ${value}`)
-                  .join("")}
-              </div>
-              <div className="actions now-actions">
-                <button
-                  className={`secondary ${liked ? "active" : ""}`}
+                  className={`iconbtn ${liked ? "active" : ""}`}
                   aria-pressed={liked}
+                  aria-label={liked ? "Remove from favourites" : "Favourite"}
+                  title={liked ? "Remove from favourites" : "Favourite"}
                   onClick={() => void favourite()}
                 >
-                  <Heart size={15} fill={liked ? "currentColor" : "none"} />
-                  {liked ? "Favourited" : "Favourite"}
+                  <Heart size={22} fill={liked ? "currentColor" : "none"} />
                 </button>
-                <button className="secondary" onClick={() => setAdd(track.id)}>
-                  Add to playlist
+                <button
+                  className="iconbtn"
+                  aria-label="Add to playlist"
+                  title="Add to playlist"
+                  onClick={() => setAdd(track.id)}
+                >
+                  <Plus size={22} />
                 </button>
               </div>
             </div>
           </div>
-          <div className="now-lyrics">
-            <h2 className="now-lyrics-title">Lyrics</h2>
+          <section className="now-lyrics" aria-label="Lyrics">
             <LyricsPanel key={track.id} trackId={track.id} />
-          </div>
+          </section>
         </div>
         <div className="now-playback">
           <SeekBar key={track.id} showTime />
-          <NowPlayingToolbar />
+          <NowPlayingToolbar visual={visual} onVisualChange={setVisual} />
         </div>
       </div>
       <div

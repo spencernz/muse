@@ -419,42 +419,86 @@
   }
 }
 
-/* Layout: tabs, then artwork/visual + details beside lyrics, then a full-width playback bar. */
+/* Calm layout: artwork (or visualizer) and details beside lyrics, one quiet control bar below.
+   Only the current lyric and the Play button are bright, solid elements. */
 .now-main {
   display: flex;
   flex-direction: column;
-  gap: 24px;
-  max-width: 1240px;
+  gap: 40px;
+  max-width: 1120px;
   margin-inline: auto;
-  padding: 72px clamp(16px, 3vw, 40px) 24px;
+  padding: 72px clamp(16px, 4vw, 48px) 32px;
   box-sizing: border-box;
 }
-.now-tabs { display: flex; gap: 8px; }
-.now-tabs button { min-height: 40px; padding: 0 20px; border: 0; border-radius: 0; background: #ffffff14; color: #e9e5ef; font-size: 13px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; }
-.now-tabs button:hover { background: #ffffff26; color: #fff; }
-.now-tabs button[aria-selected="true"] { background: var(--now-accent); color: var(--now-on-accent); }
-.now-stage { display: grid; grid-template-columns: minmax(300px, 440px) minmax(0, 1fr); gap: clamp(24px, 3vw, 48px); align-items: stretch; }
-.now-left { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
-.now-view { min-width: 0; }
+.now-stage { display: grid; grid-template-columns: minmax(280px, 400px) minmax(0, 1fr); gap: clamp(40px, 6vw, 88px); align-items: center; }
+.now-left { display: flex; flex-direction: column; gap: 24px; min-width: 0; }
+.now-view { min-width: 0; aspect-ratio: 1; }
+.now-view .now-artwork { height: 100%; }
 .now-view .visual-effects { margin: 0; }
-.now-information { min-width: 0; padding-inline: 2px; }
-.now-information .now-metadata { margin-top: 2px; }
+.now-placeholder { width: 100%; height: 100%; display: grid; place-items: center; background: #ffffff0d; color: #ffffff38; }
+.now-placeholder svg { width: 28%; height: 28%; stroke-width: 1.2; }
 
-.now-lyrics { position: relative; display: flex; flex-direction: column; min-width: 0; min-height: 0; }
-.now-lyrics-title { margin: 0 0 4px; font-size: 13px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--now-accent); }
-.now-lyrics .lyrics-panel { flex: 1; min-height: 320px; display: flex; flex-direction: column; justify-content: center; }
-.now-lyrics .lyrics-scroll { flex: 1 1 0; height: auto; min-height: 320px; overflow-y: auto; overscroll-behavior: contain; padding-block: 24px 40%; scroll-padding-block: 24px; mask-image: linear-gradient(transparent, #000 8%, #000 85%, transparent); }
-.lyric-line { display: block; width: 100%; text-align: left; background: none; border: 0; border-radius: 0; color: #f8f7fa99; font-size: clamp(20px, 2vw, 26px); font-weight: 700; letter-spacing: -0.01em; line-height: 1.3; padding: 8px 2px; transition: color 150ms, font-size 150ms; }
-.lyric-line.current { color: #fff; font-size: clamp(24px, 2.4vw, 32px); }
-.lyric-line:hover { color: #fff; }
-.lyric-line.past { color: #f8f7fa59; }
-.lyrics-plain { white-space: pre-wrap; font-size: 20px; line-height: 1.6; }
+.now-information { display: flex; align-items: flex-end; gap: 16px; min-width: 0; }
+.now-thumb { display: none; }
+.now-text { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; min-width: 0; flex: 1; }
+.now-title { font-size: clamp(26px, 2.6vw, 34px); font-weight: 800; line-height: 1.1; letter-spacing: -0.02em; margin: 0; overflow-wrap: anywhere; }
+.now-information .now-artist { font-size: 17px; font-weight: 500; line-height: 1.3; color: var(--now-accent); text-align: left; }
+.now-information .now-metadata { margin: 0; max-width: 100%; font-size: 13px; line-height: 1.5; color: #ffffff80; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.now-information .now-metadata .now-album { color: inherit; font-size: inherit; white-space: nowrap; }
+.now-information .now-actions { display: flex; gap: 4px; flex-shrink: 0; margin: 0; }
+.now-actions .iconbtn { width: 44px; height: 44px; padding: 0; color: #ffffffa6; }
+.now-actions .iconbtn:hover { color: #fff; background: #ffffff14; }
+
+/* Quieter controls: secondary icons are dimmer; active toggles take the album colour. */
+.now-toolbar .iconbtn { color: #ffffffa6; }
+.now-toolbar .iconbtn:hover { color: #fff; }
+.now-toolbar .now-transport .iconbtn { color: #ffffffd9; }
+.now-page .now-toolbar .iconbtn.active,
+.now-page .now-actions .iconbtn.active { color: var(--now-accent); }
+
+.now-lyrics { position: relative; display: flex; flex-direction: column; min-width: 0; max-width: 600px; height: min(520px, 62vh); }
+.now-lyrics .lyrics-panel { flex: 1; min-height: 0; display: flex; flex-direction: column; justify-content: center; color: #ffffff80; font-size: 15px; }
+.now-lyrics .lyrics-scroll { flex: 1 1 0; height: auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; padding-block: 30% 45%; -webkit-mask-image: linear-gradient(transparent, #000 18%, #000 78%, transparent); mask-image: linear-gradient(transparent, #000 18%, #000 78%, transparent); }
+.now-lyrics .lyrics-scroll::-webkit-scrollbar { display: none; }
+.lyric-line { display: block; width: 100%; text-align: left; background: none; border: 0; border-radius: 0; color: #ffffff6b; font-size: clamp(18px, 1.7vw, 22px); font-weight: 500; letter-spacing: -0.01em; line-height: 1.3; padding: 9px 0; transition: color 200ms, font-size 200ms; }
+.lyric-line.past { color: #ffffff40; }
+.lyric-line.current { color: #fff; font-size: clamp(22px, 2.3vw, 30px); font-weight: 700; }
+.lyric-line:hover { color: #ffffffcc; }
+.lyrics-plain { white-space: pre-wrap; font-size: 18px; line-height: 1.7; color: #ffffffb3; }
 @media (prefers-reduced-motion: reduce) { .lyric-line { transition: none; } }
 
-@media (max-width: 900px) {
-  .now-stage { grid-template-columns: minmax(0, 1fr); }
-  .now-left { width: 100%; max-width: 480px; justify-self: center; }
-  .now-lyrics .lyrics-scroll { min-height: 280px; max-height: 50vh; }
+@media (max-width: 900px) and (min-width: 701px) {
+  .now-stage { grid-template-columns: minmax(240px, 320px) minmax(0, 1fr); gap: 32px; }
+}
+/* Small windows: compact header, lyrics (or the visualizer) fill the middle, controls pinned below. */
+@media (max-width: 700px) {
+  .now-page .now-main { min-height: 100dvh; padding: 16px 16px 0; gap: 8px; }
+  .now-stage { display: flex; flex-direction: column; align-items: stretch; gap: 8px; flex: 1; min-height: 0; }
+  .now-left { display: contents; }
+  .now-information { order: 0; align-items: center; gap: 12px; padding-right: 64px; }
+  .now-thumb { display: block; width: 64px; height: 64px; flex-shrink: 0; }
+  .now-thumb .artwork, .now-thumb .now-placeholder { width: 100%; height: 100%; }
+  .now-thumb .art-text, .now-thumb .art-sub { display: none; }
+  .now-text { gap: 2px; }
+  .now-title { font-size: 20px; letter-spacing: -0.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+  .now-information .now-artist { font-size: 14px; }
+  .now-information .now-metadata { font-size: 12px; }
+  .now-information .now-actions .iconbtn[aria-label="Add to playlist"] { display: none; }
+  .now-view { order: 1; display: none; }
+  .now-page--visual .now-view { display: flex; flex-direction: column; aspect-ratio: auto; flex: 1; min-height: 300px; }
+  .now-page--visual .now-view .visual-effects { flex: 1; height: auto; min-height: 0; }
+  .now-page--visual .now-view .visual-stage { min-height: 160px; }
+  .now-lyrics { order: 2; flex: 1; height: auto; min-height: 240px; max-width: none; }
+  .now-page--visual .now-lyrics { display: none; }
+  .now-playback { position: sticky; bottom: 0; z-index: 2; padding: 12px 0 16px; background: linear-gradient(transparent, var(--now-background) 35%); }
+  .now-toolbar { margin-top: 12px; grid-template-columns: 40px minmax(0, 1fr) auto; gap: 0; }
+  .now-toolbar-end { gap: 0; }
+  .now-toolbar-end .iconbtn, .now-toolbar > .now-volume-popover > .iconbtn { width: 36px; padding: 6px; }
+  .now-toolbar .now-transport { gap: 0; }
+  .now-toolbar .now-transport .iconbtn { width: 34px; }
+  .now-toolbar .now-transport .playbtn { width: 52px; height: 52px; margin-inline: 4px; }
+  .lyric-line { font-size: 19px; }
+  .lyric-line.current { font-size: 24px; }
 }
 .app--now .now-close.iconbtn { background: #ffffff14; border-color: transparent; }
 .app--now .now-close.iconbtn:hover { background: #ffffff26; border-color: transparent; }

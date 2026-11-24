@@ -626,10 +626,10 @@ it("keeps playlist identity and favourite results tied to their original track",
     useMuse.setState((s) => ({ playback: { ...s.playback, current: next } })),
   );
   expect(
-    await screen.findByRole("button", { name: "Favourited" }),
+    await screen.findByRole("button", { name: "Remove from favourites" }),
   ).toHaveAttribute("aria-pressed", "true");
   await act(async () => resolveOld([{ ...song, liked: false }]));
-  expect(screen.getByRole("button", { name: "Favourited" })).toHaveAttribute(
+  expect(screen.getByRole("button", { name: "Remove from favourites" })).toHaveAttribute(
     "aria-pressed",
     "true",
   );
@@ -645,7 +645,7 @@ it("keeps playlist identity and favourite results tied to their original track",
       song.id,
     ]),
   );
-  await user.click(screen.getByRole("button", { name: "Favourited" }));
+  await user.click(screen.getByRole("button", { name: "Remove from favourites" }));
   await waitFor(() =>
     expect(api.favourite).toHaveBeenCalledWith(next.id, false),
   );
@@ -941,7 +941,7 @@ it("explains local catalog removal, supports cancel and retries without losing t
 it("merges Now Playing controls and supports a dismissible volume popup without leaving playback",async()=>{
   const user=userEvent.setup();act(()=>useMuse.setState({page:"now"}));render(<App/>);
   const toolbar=screen.getByRole("group",{name:"Now Playing controls"});
-  expect(within(toolbar).getAllByRole("button").map(button=>button.getAttribute("aria-label"))).toEqual(["Adjust volume","Shuffle","Previous track","Play","Next track","Repeat: off","AirPlay / audio output","Open playback queue"]);
+  expect(within(toolbar).getAllByRole("button").map(button=>button.getAttribute("aria-label"))).toEqual(["Adjust volume","Shuffle","Previous track","Play","Next track","Repeat: off","Visualizer","AirPlay / audio output","Open playback queue"]);
   expect(screen.queryByRole("slider",{name:"Volume"})).not.toBeInTheDocument();
   const trigger=within(toolbar).getByRole("button",{name:"Adjust volume"});await user.click(trigger);
   expect(screen.getByRole("dialog",{name:"Volume controls"})).toBeVisible();expect(screen.getByRole("slider",{name:"Volume"})).toHaveFocus();
@@ -963,29 +963,31 @@ it("keeps the volume popup interactive through native range focus changes until 
   await user.click(screen.getByRole("heading",{level:1}));expect(screen.queryByRole("dialog",{name:"Volume controls"})).not.toBeInTheDocument();
 });
 
-it("shows lyrics beside the song details and switches Now playing and Visual with the keyboard", async () => {
+it("keeps lyrics beside the song details and toggles the visualizer from the controls", async () => {
   vi.mocked(api.lyrics).mockResolvedValue(null);
   vi.mocked(api.visualizerActive).mockResolvedValue();vi.mocked(api.visualizerFrame).mockResolvedValue({trackId:song.id,epoch:1,sequence:0,available:false,playing:false,bands:[],waveform:[],rms:0,bass:0,mids:0,treble:0});
   const context=vi.spyOn(HTMLCanvasElement.prototype,'getContext').mockReturnValue(null);
   try{
-  act(()=>useMuse.setState({page:"now",playback:{...emptyPlayback,current:song,queue:[song.id]}}));
+  act(()=>useMuse.setState({page:"now",library:emptyLibrary,playback:{...emptyPlayback,current:{...song,cover:null},queue:[song.id]}}));
   const user=userEvent.setup(); const {container}=render(<App/>);
-  expect(screen.getAllByRole("tab").map(tab=>tab.textContent)).toEqual(["Now playing","Visual"]);
+  expect(screen.queryByRole("tab")).not.toBeInTheDocument();
   expect(await screen.findByText(/Lyrics aren’t available/)).toBeVisible();
   expect(api.lyrics).toHaveBeenCalledWith(song.id);
   expect(screen.getByRole("heading",{name:song.title})).toBeVisible();
-  expect(container.querySelector(".now-artwork")).toBeInTheDocument();
-  screen.getByRole("tab",{name:"Now playing"}).focus();
-  await user.keyboard("{ArrowRight}");
-  expect(screen.getByRole("tab",{name:"Visual"})).toHaveFocus();
+  expect(screen.getAllByRole("img",{name:"No album artwork"}).length).toBeGreaterThan(0);
+  expect(container.querySelector(".now-artwork .art-text")).not.toBeInTheDocument();
+  const toggle=screen.getByRole("button",{name:"Visualizer"});
+  expect(toggle).toHaveAttribute("aria-pressed","false");
+  await user.click(toggle);
+  expect(toggle).toHaveAttribute("aria-pressed","true");
   expect(screen.getByRole("region",{name:"Visual effects"})).toBeInTheDocument();
+  expect(container.querySelector(".now-page")).toHaveClass("now-page--visual");
   expect(container.querySelector(".now-artwork")).not.toBeInTheDocument();
+  expect(screen.queryByRole("button",{name:"Chalk Zoo"})).not.toBeInTheDocument();
   expect(screen.getByRole("heading",{name:song.title})).toBeVisible();
-  expect(screen.getByRole("region",{name:"Lyrics"})).toBeVisible();
   expect(screen.getByRole("slider",{name:"Playback position"})).toBeVisible();
-  expect(screen.queryByRole("button",{name:"Expand visual width"})).not.toBeInTheDocument();
-  await user.keyboard("{ArrowRight}");
-  expect(screen.getByRole("tab",{name:"Now playing"})).toHaveFocus();
+  await user.click(toggle);
+  expect(container.querySelector(".now-artwork")).toBeInTheDocument();
   }finally{context.mockRestore();}
 });
 

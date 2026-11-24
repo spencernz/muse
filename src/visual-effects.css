@@ -33,4 +33,4 @@ dialog.visual-effects--fullscreen{position:fixed;inset:0;width:100vw;height:100d
 .visual-effects--fullscreen .visual-controls,.visual-effects--fullscreen .visual-status{display:none}
 .visual-effects--fullscreen .visual-display-actions{top:max(16px,env(safe-area-inset-top));right:max(16px,env(safe-area-inset-right))}
 @media(max-width:600px){.visual-display-actions .iconbtn{width:44px;height:44px}}
-@media(max-width:600px){.visual-modes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}.visual-modes button{min-height:44px}}
+@media(max-width:600px){.visual-modes{display:grid;grid-template-columns:repeat(4,minmax(0,1fr))}.visual-modes button{min-height:44px;padding-inline:2px}}

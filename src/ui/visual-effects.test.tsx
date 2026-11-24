@@ -13,7 +13,7 @@ vi.mock('../visualizer/engine',()=>({VisualizerEngine:class{constructor(){state.
 afterEach(()=>{cleanup();vi.clearAllMocks();localStorage.clear();vi.restoreAllMocks();});
 it('switches all modes and themes without recreating audio analysis or graphics resources',async()=>{
  const user=userEvent.setup();render(<VisualEffectsTab/>);expect(screen.getByRole('status')).toHaveTextContent('Live audio');
- for(const name of ['Wave','Retro','Fire','Chalk Zoo','Spectrum'])await user.click(screen.getByRole('button',{name}));
+ for(const name of ['Wave','Retro','Fire','Spectrum'])await user.click(screen.getByRole('button',{name}));
  await user.selectOptions(screen.getByRole('combobox'),'ice');fireEvent.change(screen.getByRole('slider',{name:'Visual energy'}),{target:{value:'1.5'}});
  expect(state.start).toHaveBeenCalledTimes(1);expect(state.construct).toHaveBeenCalledTimes(1);expect(state.dispose).not.toHaveBeenCalled();expect(JSON.parse(localStorage.getItem('muse.visual-effects.v1')!)).toMatchObject({effect:'spectrum',theme:'ice',intensity:1.5});
  cleanup();expect(state.stop).toHaveBeenCalledTimes(1);expect(state.dispose).toHaveBeenCalledTimes(1);
@@ -28,9 +28,9 @@ it('shuffles to another effect every 30 seconds with a clear label and preserves
  try{
   render(<VisualEffectsTab/>);fireEvent.click(screen.getByRole('checkbox',{name:'Shuffle effects'}));
   const {act}=await import('@testing-library/react');await act(()=>vi.advanceTimersByTimeAsync(30000));
-  expect(screen.getByRole('button',{name:'Chalk Zoo'})).toHaveAttribute('aria-pressed','true');expect(JSON.parse(localStorage.getItem('muse.visual-effects.v1')!)).toMatchObject({effect:'chalk',auto:true});
-  await act(()=>vi.advanceTimersByTimeAsync(30000));expect(screen.getByRole('button',{name:'Fire'})).toHaveAttribute('aria-pressed','true');expect(state.construct).toHaveBeenCalledTimes(1);
-  fireEvent.click(screen.getByRole('checkbox',{name:'Shuffle effects'}));await act(()=>vi.advanceTimersByTimeAsync(30000));expect(screen.getByRole('button',{name:'Fire'})).toHaveAttribute('aria-pressed','true');
+  expect(screen.getByRole('button',{name:'Fire'})).toHaveAttribute('aria-pressed','true');expect(JSON.parse(localStorage.getItem('muse.visual-effects.v1')!)).toMatchObject({effect:'fire',auto:true});
+  await act(()=>vi.advanceTimersByTimeAsync(30000));expect(screen.getByRole('button',{name:'Retro'})).toHaveAttribute('aria-pressed','true');expect(state.construct).toHaveBeenCalledTimes(1);
+  fireEvent.click(screen.getByRole('checkbox',{name:'Shuffle effects'}));await act(()=>vi.advanceTimersByTimeAsync(30000));expect(screen.getByRole('button',{name:'Retro'})).toHaveAttribute('aria-pressed','true');
  }finally{vi.useRealTimers();}
 });
 
@@ -48,6 +48,6 @@ it('handles Escape and preserves a pre-existing native fullscreen window',async(
 it('restores the inline visual and reports failure when native fullscreen entry fails',async()=>{
  vi.mocked(api.enterFullscreen).mockRejectedValueOnce('unavailable');const user=userEvent.setup();render(<VisualEffectsTab/>);await user.click(screen.getByRole('button',{name:'Fullscreen visual'}));await waitFor(()=>expect(screen.queryByRole('dialog',{name:'Fullscreen visual effects'})).not.toBeInTheDocument());expect(screen.getByRole('alert')).toHaveTextContent('Could not open fullscreen');expect(screen.getByRole('button',{name:'Fullscreen visual'})).toBeEnabled();
 });
-it('keeps Chalk Zoo automatic with no energy or colour tuning controls',async()=>{
- const user=userEvent.setup();render(<VisualEffectsTab/>);await user.click(screen.getByRole('button',{name:'Chalk Zoo'}));expect(screen.queryByRole('slider',{name:'Visual energy'})).not.toBeInTheDocument();expect(screen.queryByRole('combobox')).not.toBeInTheDocument();expect(screen.getByRole('button',{name:'Fullscreen visual'})).toBeEnabled();
+it('offers four effects and keeps Retro automatic with no energy or colour tuning controls',async()=>{
+ const user=userEvent.setup();render(<VisualEffectsTab/>);expect(screen.getByRole('group',{name:'Visual effect'}).querySelectorAll('button').length).toBe(4);expect(screen.queryByRole('button',{name:'Chalk Zoo'})).not.toBeInTheDocument();await user.click(screen.getByRole('button',{name:'Retro'}));expect(screen.queryByRole('slider',{name:'Visual energy'})).not.toBeInTheDocument();expect(screen.queryByRole('combobox')).not.toBeInTheDocument();expect(screen.getByRole('button',{name:'Fullscreen visual'})).toBeEnabled();
 });

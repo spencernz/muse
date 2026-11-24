@@ -29,7 +29,8 @@ export function installScrollbarActivity(root:Document=document){
    const length=Math.min(track,Math.max(24,track*size/total)),scroll=horizontal?element.scrollLeft:element.scrollTop,offset=(track-length)*Math.max(0,scroll)/Math.max(1,total-size);
    Object.assign(bar.style,{left:`${horizontal?visible.left+offset:visible.right-10}px`,top:`${horizontal?pane.bottom-10:visible.top+offset}px`,width:`${horizontal?length:8}px`,height:`${horizontal?8:length}px`});}
  }
- function reveal(element:HTMLElement){clearTimeout(timers.get(element));element.classList.add('scrollbar-active');position(element);timers.set(element,setTimeout(()=>{if(element===held)return;remove(element);},1000));}
+ // Panes that scroll themselves (synced lyrics) opt out with data-quiet-scroll.
+ function reveal(element:HTMLElement){if(element.hasAttribute('data-quiet-scroll'))return;clearTimeout(timers.get(element));element.classList.add('scrollbar-active');position(element);timers.set(element,setTimeout(()=>{if(element===held)return;remove(element);},1000));}
  function scrollable(target:EventTarget|null){let element=target instanceof HTMLElement?target:null;while(element){const style=getComputedStyle(element);if((element.scrollHeight>element.clientHeight&&/auto|scroll/.test(style.overflowY))||(element.scrollWidth>element.clientWidth&&/auto|scroll/.test(style.overflowX)))return element;element=element.parentElement;}return null;}
  function scroll(event:Event){if(event.target instanceof HTMLElement&&scrollable(event.target)===event.target)reveal(event.target);for(const pane of overlays.keys())if(pane!==event.target)position(pane);}
  function wheel(event:Event){const element=scrollable(event.target);if(element)reveal(element);}

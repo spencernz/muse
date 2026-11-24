@@ -1,4 +1,3 @@
-import { ChalkEffect } from './chalk';
 import { alpha } from './palettes';
 import type { DrawFrame, EffectMode } from './types';
 const TAU=Math.PI*2;
@@ -6,9 +5,7 @@ const TAU=Math.PI*2;
 export class CanvasEffects {
  private seeds=Float32Array.from({length:1800},(_,i)=>{const x=Math.sin(i*127.1+31.7)*43758.5453;return x-Math.floor(x);});
  private emberAges=Float64Array.from({length:100},(_,i)=>this.seeds[i*6]);
- private chalk:ChalkEffect|undefined;
- dispose(){this.chalk?.dispose();}
- status(mode:EffectMode){return mode==="chalk"?this.chalk?.status()??null:null;}
+ dispose(){}
  draw(mode:EffectMode,f:DrawFrame,gpu:boolean){
   const {ctx:c,width:w,height:h,palette:p,signals:s,time:t,intensity:k,reduced}=f;
   c.clearRect(0,0,w,h);
@@ -19,7 +16,6 @@ export class CanvasEffects {
    if(!gpu)this.flames(f);
    c.globalCompositeOperation='lighter';for(let i=0;i<100*f.quality;i++){const n=i*6;const speed=.04+this.seeds[n+1]*.1+s.mids*.08*k;if(!reduced&&s.live)this.emberAges[i]=(this.emberAges[i]+Math.min(.1,Math.max(0,f.dt))*speed)%1;const age=this.emberAges[i];const x=w*(.5+(this.seeds[n+2]-.5)*(.7-age*.25)+Math.sin(age*9+t*.3+this.seeds[n+3]*8)*.03);const y=h*(1-age);this.dot(c,x,y,.6+this.seeds[n+4]*1.4,p[i%3],Math.sin(age*Math.PI)*(.3+s.treble*k*.5));}c.globalCompositeOperation='source-over';
   }
-  if(mode==='chalk'){this.chalk??=new ChalkEffect();this.chalk.draw(f);}
  }
  private dot(c:CanvasRenderingContext2D,x:number,y:number,r:number,colour:string,a:number){c.globalAlpha=Math.min(1,a);c.fillStyle=colour;c.beginPath();c.arc(x,y,r,0,TAU);c.fill();c.globalAlpha=1;}
  private spectrum(f:DrawFrame){const {ctx:c,width:w,height:h,palette:p,signals:s,intensity:k}=f;const count=64,gap=w*.004,bar=(w*.87/count)-gap,base=h*.72;const g=c.createLinearGradient(0,h*.1,0,base);g.addColorStop(0,p[2]);g.addColorStop(.45,p[0]);g.addColorStop(1,alpha(p[1],.45));c.fillStyle=g;c.shadowColor=alpha(p[0],.35);c.shadowBlur=9;for(let i=0;i<count;i++){const v=s.spectrum[i];const height=Math.min(h*.58,2+Math.pow(v,1.7)*h*.57*k*(1.15-i/count*.3));const x=w*.065+i*(bar+gap);c.globalAlpha=.75+v*.25;c.fillRect(x,base-height,bar,height);c.globalAlpha=.16;c.fillRect(x,base+5,bar,height*.24);}c.globalAlpha=1;c.shadowBlur=0;const line=c.createLinearGradient(0,0,w,0);line.addColorStop(0,alpha(p[0],0));line.addColorStop(.5,alpha(p[0],.35));line.addColorStop(1,alpha(p[0],0));c.fillStyle=line;c.fillRect(w*.04,base+2,w*.92,1);}
