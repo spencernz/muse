@@ -305,10 +305,7 @@ impl RemoteCatalog {
             status.running = false;
             match result {
                 Ok(()) => {
-                    if let Some(app) = &worker.app {
-                        use tauri::Emitter;
-                        let _ = app.emit("library-changed", ());
-                    }
+                    worker.library_changed();
                     status.completed_at = Some(now());
                     status.message = if status.scanned == 0 {
                         "No supported music files found.".into()
@@ -318,10 +315,14 @@ impl RemoteCatalog {
                 }
                 Err(e) if worker.cancel.load(Ordering::Acquire) => {
                     let _ = e;
-                    status.message = "Sync cancelled. Previous catalog kept.".into();
+                    worker.library_changed();
+                    status.message =
+                        "Sync cancelled. Songs found so far were kept; nothing was removed.".into();
                 }
                 Err(e) => {
-                    status.message = "Sync stopped. Previous catalog kept.".into();
+                    worker.library_changed();
+                    status.message =
+                        "Sync stopped. Songs found so far were kept; nothing was removed.".into();
                     status.error = Some(e);
                 }
             }
@@ -355,6 +356,9 @@ impl RemoteCatalog {
         let mut pending = vec![(String::new(), 0usize)];
         let mut directories = 0;
         let mut rows = Vec::new();
+        // Rows before this index are already in the library; later ones wait for the next batch.
+        let mut published = 0;
+        let mut last_publish = std::time::Instant::now();
         while let Some((relative, depth)) = pending.pop() {
             self.check(selected)?;
             directories += 1;
@@ -463,6 +467,15 @@ impl RemoteCatalog {
                             modified,
                             tags,
                         });
+                        if rows.len() - published >= PUBLISH_BATCH
+                            || last_publish.elapsed() >= PUBLISH_INTERVAL
+                        {
+                            self.check(selected)?;
+                            publish(&self.db, selected, &rows[published..], &self.cancel, false)?;
+                            published = rows.len();
+                            last_publish = std::time::Instant::now();
+                            self.library_changed();
+                        }
                     }
                     _ => {}
                 }
@@ -471,7 +484,16 @@ impl RemoteCatalog {
         self.check(selected)?;
         commit(&self.db, selected, &rows, &self.cancel)
     }
+    fn library_changed(&self) {
+        if let Some(app) = &self.app {
+            use tauri::Emitter;
+            let _ = app.emit("library-changed", ());
+        }
+    }
 }
+/// Found tracks are published in small batches so music is playable while a sync runs.
+const PUBLISH_BATCH: usize = 25;
+const PUBLISH_INTERVAL: std::time::Duration = std::time::Duration::from_secs(2);
 struct CatalogRow {
     relative: String,
     size: u64,
@@ -481,7 +503,19 @@ struct CatalogRow {
 fn track_id(source: &str, relative: &str) -> String {
     format!("{source}:{}", blake3::hash(relative.as_bytes()).to_hex())
 }
+/// Publishes a completed scan: every row, and files no longer listed become unavailable.
 fn commit(db: &Db, selected: &Selection, rows: &[CatalogRow], cancel: &AtomicBool) -> Result<()> {
+    publish(db, selected, rows, cancel, true)
+}
+/// Adds or updates rows. Only a complete scan (`complete`) may mark missing files unavailable,
+/// so an interrupted sync never removes music.
+fn publish(
+    db: &Db,
+    selected: &Selection,
+    rows: &[CatalogRow],
+    cancel: &AtomicBool,
+    complete: bool,
+) -> Result<()> {
     let mut conn = db.connect()?;
     // IMMEDIATE serializes the profile check and publication with settings writes.
     let tx = conn
@@ -500,12 +534,18 @@ fn commit(db: &Db, selected: &Selection, rows: &[CatalogRow], cancel: &AtomicBoo
         return Err("SSH selection changed. Sync again.".into());
     }
     let source = selected.id();
-    tx.execute("INSERT INTO remote_sources(id,profile,last_sync) VALUES (?,?,?) ON CONFLICT(id) DO UPDATE SET profile=excluded.profile,last_sync=excluded.last_sync",params![source,serde_json::to_string(&selected.config).map_err(|e|e.to_string())?,now()]).map_err(|e|e.to_string())?;
-    tx.execute(
-        "UPDATE remote_locations SET present=0 WHERE source_id=?",
-        [&source],
-    )
-    .map_err(|e| e.to_string())?;
+    let profile_json = serde_json::to_string(&selected.config).map_err(|e| e.to_string())?;
+    if complete {
+        tx.execute("INSERT INTO remote_sources(id,profile,last_sync) VALUES (?,?,?) ON CONFLICT(id) DO UPDATE SET profile=excluded.profile,last_sync=excluded.last_sync",params![source,profile_json,now()]).map_err(|e|e.to_string())?;
+        tx.execute(
+            "UPDATE remote_locations SET present=0 WHERE source_id=?",
+            [&source],
+        )
+        .map_err(|e| e.to_string())?;
+    } else {
+        // A batch keeps the previous sync time; only a completed sync updates it.
+        tx.execute("INSERT INTO remote_sources(id,profile,last_sync) VALUES (?,?,?) ON CONFLICT(id) DO UPDATE SET profile=excluded.profile",params![source,profile_json,now()]).map_err(|e|e.to_string())?;
+    }
     for row in rows {
         if cancel.load(Ordering::Acquire) {
             return Err("Sync cancelled.".into());
@@ -609,6 +649,7 @@ mod tests {
         truncated: AtomicBool,
         block: AtomicBool,
         entered: AtomicBool,
+        fail_dir: Mutex<Option<String>>,
     }
     struct Fake(Arc<Files>);
     fn key() -> HostKey {
@@ -658,7 +699,9 @@ mod tests {
             while self.0.block.load(Ordering::Acquire) {
                 std::thread::sleep(std::time::Duration::from_millis(1));
             }
-            if self.0.fail.load(Ordering::Acquire) {
+            if self.0.fail.load(Ordering::Acquire)
+                || self.0.fail_dir.lock().unwrap().as_deref() == Some(path)
+            {
                 return Err(sftp::error(sftp::ErrorCode::Unreachable));
             }
             let files = self.0.files.lock().unwrap();
@@ -919,6 +962,68 @@ mod tests {
             .path()
             .extension()
             .is_some_and(|e| matches!(e.to_str(), Some("mp3" | "flac")))));
+    }
+    #[test]
+    fn songs_are_published_in_batches_and_an_interrupted_sync_removes_nothing() {
+        let (_dir, db, files, catalog, selected) = setup();
+        let bytes = audio("Song");
+        files
+            .files
+            .lock()
+            .unwrap()
+            .insert("/music/old.mp3".into(), (bytes.clone(), 1));
+        catalog.scan(&selected).unwrap();
+        let old = track_id(&selected.id(), "old.mp3");
+        let last_sync = || -> i64 {
+            db.connect()
+                .unwrap()
+                .query_row(
+                    "SELECT last_sync FROM remote_sources WHERE id=?",
+                    [selected.id()],
+                    |r| r.get(0),
+                )
+                .unwrap()
+        };
+        db.connect()
+            .unwrap()
+            .execute("UPDATE remote_sources SET last_sync=1", [])
+            .unwrap();
+        {
+            // The old file moves into a folder that fails; 30 new files sit beside it.
+            let mut listing = files.files.lock().unwrap();
+            listing.clear();
+            listing.insert("/music/z/old.mp3".into(), (bytes.clone(), 1));
+            for n in 0..30 {
+                listing.insert(format!("/music/{n:02}.mp3"), (bytes.clone(), 2));
+            }
+        }
+        *files.fail_dir.lock().unwrap() = Some("/music/z".into());
+        assert!(catalog.scan(&selected).is_err());
+        let available: Vec<_> = (0..30)
+            .map(|n| {
+                db.track(&track_id(&selected.id(), &format!("{n:02}.mp3")))
+                    .is_ok_and(|t| t.available)
+            })
+            .collect();
+        assert!(
+            available[..25].iter().all(|v| *v),
+            "the first batch is playable before the sync finishes"
+        );
+        assert!(available[25..].iter().all(|v| !*v));
+        assert!(
+            db.track(&old).unwrap().available,
+            "an interrupted sync never marks music missing"
+        );
+        assert_eq!(last_sync(), 1, "only a completed sync records its time");
+        *files.fail_dir.lock().unwrap() = None;
+        files.files.lock().unwrap().remove("/music/z/old.mp3");
+        catalog.scan(&selected).unwrap();
+        assert!((0..30).all(|n| db
+            .track(&track_id(&selected.id(), &format!("{n:02}.mp3")))
+            .unwrap()
+            .available));
+        assert!(!db.track(&old).unwrap().available);
+        assert!(last_sync() > 1);
     }
     #[test]
     fn failures_cancellation_and_truncation_keep_previous_catalog_and_local_sources() {

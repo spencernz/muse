@@ -493,7 +493,7 @@ export function SftpScreen() {
       <section className="provider-section" aria-labelledby="sftp-sync-heading">
         <h2 id="sftp-sync-heading" className="section-title">Sync remote catalog</h2>
         <AutomaticSync/>
-        <p className="sub">Sync reads this folder and its subfolders into your library. Only metadata and artwork are saved here. Music plays from the server.</p>
+        <p className="sub">Sync reads this folder and its subfolders into your library. Songs appear and can be played as they are found. Only metadata and artwork are saved here. Music plays from the server.</p>
         {state?.profile && <p className="sftp-path">{state.profile.root}</p>}
         <div className="actions">
           <button className="primary" disabled={disabled || !state?.profile} onClick={() => {
