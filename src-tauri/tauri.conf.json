@@ -30,9 +30,15 @@
   },
   "bundle": {
     "active": true,
-    "targets": ["app"],
+    "targets": ["app", "deb"],
+    "linux": {
+      "deb": {
+        "depends": ["libasound2t64 | libasound2", "libdbus-1-3"]
+      }
+    },
     "category": "Music",
     "shortDescription": "Your personal music space",
+    "longDescription": "Muse is a local-first desktop music player. It indexes your music folders, plays them offline and keeps playlists, favourites and history on your computer.",
     "copyright": "Copyright © 2026 Spencer Hu",
     "icon": [
       "icons/32x32.png",

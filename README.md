@@ -11,7 +11,28 @@ npm run desktop
 
 Rust and Xcode are installed on this Mac. Build the independent offline application with `npm run bundle`, then open `src-tauri/target/release/bundle/macos/Muse.app`. The app needs no development server or cloud account. `npm run dev` is a UI preview only; native features require the desktop shell.
 
-Run these commands from the Muse repository root. Mac ARM64 is the verified target; other operating systems require their Tauri prerequisites and remain unvalidated.
+Run these commands from the Muse repository root. `npm run bundle` (or `make bundle`) builds `Muse.app` on macOS and a Debian package on Linux.
+
+### Ubuntu `.deb`
+
+Install the Tauri build prerequisites, Node.js and Rust once:
+
+```sh
+sudo apt install build-essential curl file pkg-config nodejs npm \
+  libwebkit2gtk-4.1-dev libxdo-dev libssl-dev libayatana-appindicator3-dev \
+  librsvg2-dev libasound2-dev libdbus-1-dev
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+```
+
+Then build and install:
+
+```sh
+npm ci
+npm run bundle
+sudo apt install ./src-tauri/target/release/bundle/deb/Muse_0.1.0_amd64.deb
+```
+
+Muse then appears in the application launcher. Remove it with `sudo apt remove muse`; your library data is kept. On Linux the native title bar is used instead of the macOS overlay, and AirPlay discovery is macOS-only.
 
 ## Use
 
@@ -34,7 +55,7 @@ Keyboard shortcuts outside fields/dialogs: Space play/pause; Left/Right seek fiv
 
 ## Storage and identity
 
-On macOS the SQLite database, user state and artwork cache live in `~/Library/Application Support/local.muse.player/`. Back up this directory to retain playlists, favourites, history, queue and tiles. Audio stays in its source folders. An isolated QA build uses a different app identifier and catalog.
+On macOS the SQLite database, user state and artwork cache live in `~/Library/Application Support/local.muse.player/`. On Linux they live in `~/.local/share/local.muse.player/`. Back up this directory to retain playlists, favourites, history, queue and tiles. Audio stays in its source folders. An isolated QA build uses a different app identifier and catalog.
 
 Scans compare file size and modification time and hash new/changed files. Byte-identical copies share a track; moves match by content hash; edits at the same path preserve identity. Missing/deleted files become unavailable instead of destroying user preferences. Symlinks inside selected folders are not followed. Missing tags fall back to filenames/folder names. No online guesses are made.
 

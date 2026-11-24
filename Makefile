@@ -1,4 +1,4 @@
-.PHONY: typecheck lint test build
+.PHONY: typecheck lint test build bundle
 
 typecheck:
 	npm run typecheck
@@ -11,3 +11,6 @@ test:
 
 build:
 	npm run build
+
+bundle:
+	npm run bundle
