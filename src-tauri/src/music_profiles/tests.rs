@@ -156,6 +156,8 @@ fn remote_profiles_invalidate_on_file_or_host_identity_changes_and_disconnect() 
         username: "listener".into(),
         root: "/music".into(),
         identity_file: None,
+        password_auth: false,
+        password: None,
     };
     db.set_setting("providers.sftp.profile", &Some(&config))
         .unwrap();

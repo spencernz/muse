@@ -203,6 +203,8 @@ mod tests {
             username: "listener".into(),
             root: "/music".into(),
             identity_file: None,
+            password_auth: false,
+            password: None,
         };
         let mut narrow = wide.clone();
         narrow.root = "/music/Artist".into();

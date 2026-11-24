@@ -255,6 +255,11 @@ pub fn run() {
                     service: format!("{}.providers", app.config().identifier),
                 }),
             ));
+            providers::sftp::install_password_store(std::sync::Arc::new(
+                providers::credentials::OsCredentialStore {
+                    service: format!("{}.providers", app.config().identifier),
+                },
+            ));
             app.manage(providers::sftp_commands::SftpBackend(std::sync::Arc::new(
                 std::sync::Mutex::new(providers::sftp::SftpService::new(
                     db.clone(),

@@ -2,7 +2,13 @@
 use crate::db::{now, Db};
 use rusqlite::OptionalExtension;
 use serde::{Deserialize, Serialize};
-use std::{collections::BTreeMap, path::Path, sync::Arc};
+use std::{
+    collections::BTreeMap,
+    path::Path,
+    sync::{Arc, OnceLock},
+};
+
+use super::credentials::CredentialStore;
 
 const PROFILE: &str = "providers.sftp.profile";
 const HOSTS: &str = "providers.sftp.trusted_hosts";
@@ -23,6 +29,8 @@ pub enum ErrorCode {
     PathOutsideRoot,
     Storage,
     Busy,
+    PasswordMissing,
+    CredentialStore,
 }
 #[derive(Debug, Clone, Serialize)]
 pub struct SftpError {
@@ -37,7 +45,7 @@ pub fn error(code: ErrorCode) -> SftpError {
     UnsafeAddress => "This address is not an allowed SSH destination.",
     Unreachable => "Could not reach the SSH server. Check the address, port and network, then retry.",
     Protocol => "The server did not provide a supported SSH/SFTP connection.",
-    Authentication => "SSH key authentication failed. Check the username and that your friend installed your public key. Unlock encrypted keys in your SSH agent.",
+    Authentication => "SSH sign-in failed. Check the username and password, or that your public key is installed on the server. Unlock encrypted keys in your SSH agent.",
     KeyFile => "Choose a readable private key file, not its .pub file. Restrict its permissions or unlock encrypted keys in your SSH agent.",
     HostKeyChanged => "The server key changed. Verify the new fingerprint with the server owner before resetting Muse's saved trust.",
     ConfirmationExpired => "This server verification is no longer current. Connect again to get a fresh fingerprint.",
@@ -46,7 +54,29 @@ pub fn error(code: ErrorCode) -> SftpError {
     PathOutsideRoot => "Choose a folder inside the selected music folder. Traversal and links outside it are not allowed.",
     Storage => "Muse could not read or save its SSH connection settings. Check the app data folder and retry.",
     Busy => "An SSH operation is already running. Wait for it to finish.",
+    PasswordMissing => "Enter your SSH password and connect again.",
+    CredentialStore => "Muse could not use the system keyring for your SSH password. Unlock it and retry; the password was not saved as plaintext.",
 }}
+}
+/// An SSH password held only in memory. It is never serialized, logged or returned over IPC.
+#[derive(Clone, PartialEq, Eq, Deserialize)]
+#[serde(transparent)]
+pub struct Secret(String);
+impl Secret {
+    pub fn new(value: impl Into<String>) -> Self {
+        Self(value.into())
+    }
+    pub fn expose(&self) -> &str {
+        &self.0
+    }
+}
+impl std::fmt::Debug for Secret {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str("Secret(<redacted>)")
+    }
+}
+fn is_false(value: &bool) -> bool {
+    !value
 }
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
@@ -56,6 +86,61 @@ pub struct Config {
     pub username: String,
     pub root: String,
     pub identity_file: Option<String>,
+    /// Sign in with a password kept in the OS credential store. Omitted when false so key profiles stay unchanged.
+    #[serde(default, skip_serializing_if = "is_false")]
+    pub password_auth: bool,
+    /// Supplied once from the connect form; never written to settings or sent back to the webview.
+    #[serde(default, skip_serializing)]
+    pub password: Option<Secret>,
+}
+static PASSWORDS: OnceLock<Arc<dyn CredentialStore>> = OnceLock::new();
+/// Installs the credential store used for SSH passwords. Later calls are ignored.
+pub fn install_password_store(store: Arc<dyn CredentialStore>) {
+    let _ = PASSWORDS.set(store);
+}
+fn password_store() -> Result<&'static Arc<dyn CredentialStore>> {
+    PASSWORDS
+        .get()
+        .ok_or_else(|| error(ErrorCode::CredentialStore))
+}
+fn password_slot(config: &Config) -> String {
+    format!("sftp.password:{}@{}", config.username, config.endpoint())
+}
+/// The password for authentication: the one just entered, otherwise the saved one.
+pub fn resolve_password(config: &Config) -> Result<Secret> {
+    if let Some(password) = &config.password {
+        return Ok(password.clone());
+    }
+    password_store()?
+        .get(&password_slot(config))
+        .map_err(|_| error(ErrorCode::CredentialStore))?
+        .map(Secret)
+        .ok_or_else(|| error(ErrorCode::PasswordMissing))
+}
+fn save_password(config: &Config) -> Result<()> {
+    let store = password_store();
+    match (&config.password, config.password_auth) {
+        (Some(password), true) => store?
+            .set(&password_slot(config), password.expose())
+            .map_err(|_| error(ErrorCode::CredentialStore)),
+        // Switching to key/agent sign-in removes any password saved for this account.
+        (_, false) => match store {
+            Ok(store) => {
+                let _ = store.delete(&password_slot(config));
+                Ok(())
+            }
+            Err(_) => Ok(()),
+        },
+        (None, true) => Ok(()),
+    }
+}
+fn delete_password(config: &Config) -> Result<()> {
+    match password_store() {
+        Ok(store) => store
+            .delete(&password_slot(config))
+            .map_err(|_| error(ErrorCode::CredentialStore)),
+        Err(_) => Ok(()),
+    }
 }
 impl Config {
     pub fn validate(mut self) -> Result<Self> {
@@ -109,6 +194,18 @@ impl Config {
             return Err(error(ErrorCode::InvalidConfig));
         }
         self.root = absolute_path(&self.root)?;
+        if self.password.is_some() && !self.password_auth {
+            return Err(error(ErrorCode::InvalidConfig));
+        }
+        if self.password_auth && self.identity_file.is_some() {
+            return Err(error(ErrorCode::InvalidConfig));
+        }
+        if let Some(password) = &self.password {
+            let value = password.expose();
+            if value.is_empty() || value.len() > 1024 || value.contains('\0') {
+                return Err(error(ErrorCode::InvalidConfig));
+            }
+        }
         if let Some(file) = &self.identity_file {
             if file.is_empty()
                 || file.len() > 4096
@@ -414,6 +511,16 @@ impl SftpService {
         let root = absolute_path(&session.canonical_directory(&config.root)?)?;
         config.root = root.clone();
         let listing = list_inside(session, &root, "")?;
+        save_password(&config)?;
+        if let Some(previous) = self
+            .profile
+            .as_ref()
+            .filter(|p| p.password_auth && password_slot(p) != password_slot(&config))
+        {
+            let _ = delete_password(previous);
+        }
+        // The password now lives only in the credential store; keep it out of memory and settings.
+        config.password = None;
         self.db
             .set_setting(PROFILE, &config)
             .map_err(|_| error(ErrorCode::Storage))?;
@@ -482,6 +589,11 @@ impl SftpService {
         }
     }
     pub fn disconnect(&mut self) -> Result<SftpState> {
+        self.load()?;
+        if let Some(profile) = self.profile.as_ref().filter(|p| p.password_auth) {
+            // Best effort: a locked keyring must not trap the user in a saved connection.
+            let _ = delete_password(profile);
+        }
         self.db
             .set_setting(PROFILE, &Option::<Config>::None)
             .map_err(|_| error(ErrorCode::Storage))?;
@@ -501,6 +613,8 @@ impl SftpService {
             username: "trust-reset".into(),
             root: "/".into(),
             identity_file: None,
+            password_auth: false,
+            password: None,
         }
         .validate()?;
         let mut hosts = self.hosts()?;

@@ -211,7 +211,7 @@ it("uses a native-selected key path and never collects private key contents or p
   vi.mocked(sftp.connect).mockResolvedValue({ state: initial, challenge });
   render(<SftpScreen />);
   await form(user);
-  await user.selectOptions(screen.getByLabelText("SSH key"), "file");
+  await user.selectOptions(screen.getByLabelText("Sign in with"), "file");
   expect(screen.getByRole("button", { name: "Connect SSH" })).toBeDisabled();
   await user.click(screen.getByRole("button", { name: "Choose private key" }));
   expect(await screen.findByText("/synthetic/id_ed25519")).toBeVisible();
@@ -361,4 +361,43 @@ it("persists automatic SSH sync settings and offers retry after save failure",as
  await waitFor(()=>expect(sftp.saveAutoSync).toHaveBeenLastCalledWith({enabled:true,intervalMinutes:30}));
  vi.mocked(sftp.saveAutoSync).mockRejectedValueOnce('offline');await user.click(toggle);
  expect(await screen.findByText('Could not save automatic sync. Try again.')).toBeInTheDocument();expect(toggle).toBeChecked();expect(toggle).toBeEnabled();
+});
+it("signs in with a password without keeping it in the form", async () => {
+  const user = userEvent.setup();
+  vi.mocked(sftp.connect).mockResolvedValue({ state: initial, challenge });
+  render(<SftpScreen />);
+  await form(user);
+  await user.selectOptions(screen.getByLabelText("Sign in with"), "password");
+  const field = screen.getByLabelText("Password");
+  expect(field).toHaveAttribute("type", "password");
+  expect(screen.getByRole("button", { name: "Connect SSH" })).toBeDisabled();
+  await user.type(field, "synthetic-pass");
+  await user.click(screen.getByRole("button", { name: "Connect SSH" }));
+  expect(sftp.connect).toHaveBeenCalledWith({
+    ...config,
+    passwordAuth: true,
+    password: "synthetic-pass",
+  });
+  await screen.findByRole("dialog", { name: "Verify server key" });
+  expect(screen.getByLabelText("Password")).toHaveValue("");
+});
+it("reconnects a saved password connection without asking for it again", async () => {
+  const user = userEvent.setup();
+  const saved = { ...connected, profile: { ...config, passwordAuth: true } };
+  vi.mocked(sftp.state).mockResolvedValue(saved);
+  vi.mocked(sftp.connect).mockResolvedValue({ state: saved, challenge: null });
+  render(<SftpScreen />);
+  const field = await screen.findByLabelText("Password");
+  expect(screen.getByLabelText("Sign in with")).toHaveValue("password");
+  expect(field).toHaveAttribute("placeholder", "Saved in system keyring");
+  await user.click(screen.getByRole("button", { name: "Connect SSH" }));
+  expect(sftp.connect).toHaveBeenCalledWith({ ...config, passwordAuth: true });
+  await user.clear(screen.getByLabelText("Username"));
+  await user.type(screen.getByLabelText("Username"), "someone-else");
+  expect(screen.getByRole("button", { name: "Connect SSH" })).toBeDisabled();
+});
+it("explains a missing saved password", () => {
+  expect(sftpMessage({ code: "password_missing" })).toBe(
+    "Enter your SSH password and connect again.",
+  );
 });

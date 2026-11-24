@@ -88,6 +88,29 @@ impl Connector for SshConnector {
         }))
     }
 }
+/// Answers hidden keyboard-interactive prompts with the account password; visible prompts (for example OTP) get no answer.
+struct PasswordPrompter<'a> {
+    password: &'a str,
+}
+impl ssh2::KeyboardInteractivePrompt for PasswordPrompter<'_> {
+    fn prompt<'b>(
+        &mut self,
+        _username: &str,
+        _instructions: &str,
+        prompts: &[ssh2::Prompt<'b>],
+    ) -> Vec<String> {
+        prompts
+            .iter()
+            .map(|p| {
+                if p.echo {
+                    String::new()
+                } else {
+                    self.password.to_string()
+                }
+            })
+            .collect()
+    }
+}
 struct SshSession {
     session: Session,
     sftp: Option<Sftp>,
@@ -117,7 +140,29 @@ impl RemoteSession for SshSession {
         })
     }
     fn authenticate(&mut self, config: &Config) -> Result<()> {
-        if let Some(path) = &config.identity_file {
+        if config.password_auth {
+            let password = super::sftp::resolve_password(config)?;
+            if self
+                .session
+                .userauth_password(&config.username, password.expose())
+                .is_err()
+                && !self.session.authenticated()
+            {
+                // Many NAS servers only offer keyboard-interactive; answer its password prompts.
+                let methods = self
+                    .session
+                    .auth_methods(&config.username)
+                    .unwrap_or_default();
+                if methods.split(',').any(|m| m == "keyboard-interactive") {
+                    let mut prompter = PasswordPrompter {
+                        password: password.expose(),
+                    };
+                    let _ = self
+                        .session
+                        .userauth_keyboard_interactive(&config.username, &mut prompter);
+                }
+            }
+        } else if let Some(path) = &config.identity_file {
             let info = std::fs::metadata(path).map_err(|_| error(ErrorCode::KeyFile))?;
             if !info.is_file() || info.len() > 1024 * 1024 {
                 return Err(error(ErrorCode::KeyFile));

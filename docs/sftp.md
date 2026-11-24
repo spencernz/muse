@@ -8,13 +8,21 @@ Muse connects and verifies an SSH server, saves a chosen music folder, syncs its
 
 1. Open **Settings → Remote music → Manage SSH / SFTP**.
 2. Enter the real hostname (without `ssh://`), SSH port, remote username and an absolute remote folder path. Obtain these from the server owner. DuckDNS provides a hostname; its account credentials are not SSH credentials and are not needed by Muse.
-3. Choose **SSH agent** if your key is already loaded/unlocked. Otherwise choose **Private key file → Choose private key** and select the private key matching the public key installed on the server. Files ending in `.pub` are not private keys.
+3. Under **Sign in with**, choose **Password** and enter the SSH account password, or use a key: **SSH agent** if your key is already loaded/unlocked, otherwise **Private key file → Choose private key** and select the private key matching the public key installed on the server. Files ending in `.pub` are not private keys.
 4. Choose **Connect SSH**. On first use, compare the displayed ED25519/SHA256 fingerprint against one obtained from the server owner through a trusted channel. Check **I verified this fingerprint with the server owner**, then **Trust and connect**. Muse prefers ED25519 when negotiating host keys.
 5. Open subfolders in **Remote music folder**. **Up one folder** stays within the initially selected root. Choose **Use this music folder** to save and restrict the connection to that subfolder.
 
 A saved connection loads as configured after restart until **Reconnect** or **Test connection** verifies the server again. **Refresh folder** updates the listing. Empty folders and truncated listings are identified explicitly. Only the first 500 raw directory entries are read/displayed at a time; select a smaller root/subfolder when needed. Symlinks are shown but not followed by the UI. Paths resolved outside the chosen root are rejected.
 
-**Disconnect SSH** closes the active session and clears Muse's saved SFTP profile; public server trust remains. It never edits/deletes local private keys, the user's SSH configuration/known_hosts, remote files or Plex settings.
+**Disconnect SSH** closes the active session, clears Muse's saved SFTP profile and deletes any saved SSH password; public server trust remains. It never edits/deletes local private keys, the user's SSH configuration/known_hosts, remote files or Plex settings.
+
+## Passwords
+
+**Password** sign-in uses SSH `password` authentication and falls back to `keyboard-interactive`, which many NAS servers use, answering its hidden password prompts. One-time-code prompts are not supported. The password is sent only after the server fingerprint is verified.
+
+Muse saves the password in the operating system keyring (GNOME Keyring / Secret Service on Linux, Keychain on macOS) under the account, host and port. It is never written to SQLite, localStorage or logs, and is never returned to the interface; the saved profile only records `passwordAuth: true`. **Reconnect**, **Test connection**, Sync and playback read it from the keyring. When the field shows **Saved in system keyring**, leave it empty to keep the saved password or type a new one to replace it. Changing the host, port or username requires entering the password again.
+
+**Disconnect SSH** deletes the saved password. Switching the same account to a key or agent deletes it too. If the keyring is locked or unavailable, Muse reports it and does not fall back to storing the password elsewhere. A key is safer than a password for a server exposed to the internet; ask the server owner which they prefer.
 
 ## Keys and authentication
 

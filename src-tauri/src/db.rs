@@ -381,7 +381,7 @@ impl Db {
     }
 }
 
-pub(crate) const TRACK_COLUMNS:&str="t.id,t.title,t.artist,t.album,t.album_artist,t.album_id,t.year,t.genre,t.duration,t.track_no,t.disc_no,t.cover,t.liked,EXISTS(SELECT 1 FROM locations l JOIN sources s ON s.id=l.source_id WHERE l.track_id=t.id AND l.present=1 AND s.available=1) OR EXISTS(SELECT 1 FROM remote_locations r JOIN remote_sources rs ON rs.id=r.source_id JOIN settings p ON p.key='providers.sftp.profile' AND json_remove(CASE WHEN json_valid(p.value) THEN p.value END,'$.identityFile')=json_remove(CASE WHEN json_valid(rs.profile) THEN rs.profile END,'$.identityFile') WHERE r.track_id=t.id AND r.present=1),t.added_at";
+pub(crate) const TRACK_COLUMNS:&str="t.id,t.title,t.artist,t.album,t.album_artist,t.album_id,t.year,t.genre,t.duration,t.track_no,t.disc_no,t.cover,t.liked,EXISTS(SELECT 1 FROM locations l JOIN sources s ON s.id=l.source_id WHERE l.track_id=t.id AND l.present=1 AND s.available=1) OR EXISTS(SELECT 1 FROM remote_locations r JOIN remote_sources rs ON rs.id=r.source_id JOIN settings p ON p.key='providers.sftp.profile' AND json_remove(CASE WHEN json_valid(p.value) THEN p.value END,'$.identityFile','$.passwordAuth')=json_remove(CASE WHEN json_valid(rs.profile) THEN rs.profile END,'$.identityFile','$.passwordAuth') WHERE r.track_id=t.id AND r.present=1),t.added_at";
 pub(crate) fn read_track(r: &Row) -> rusqlite::Result<Track> {
     Ok(Track {
         id: r.get(0)?,

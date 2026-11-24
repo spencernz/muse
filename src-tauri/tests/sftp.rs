@@ -2,6 +2,7 @@ use muse_lib::{
     db::Db,
     providers::{self, sftp::*, sftp_transport::allowed_ip},
 };
+use providers::credentials::CredentialStore;
 use serde_json::json;
 use std::{
     collections::HashMap,
@@ -19,6 +20,8 @@ fn config() -> Config {
         username: "listener".into(),
         root: "/media/Music".into(),
         identity_file: None,
+        password_auth: false,
+        password: None,
     }
 }
 fn key(number: u8) -> HostKey {
@@ -40,6 +43,7 @@ struct FakeConnector {
     scenario: Arc<Mutex<Scenario>>,
     authenticated: Arc<AtomicUsize>,
     handshakes: AtomicUsize,
+    passwords: Arc<Mutex<Vec<String>>>,
 }
 impl FakeConnector {
     fn new() -> Self {
@@ -73,12 +77,14 @@ impl FakeConnector {
             })),
             authenticated: Arc::new(AtomicUsize::new(0)),
             handshakes: AtomicUsize::new(0),
+            passwords: Arc::new(Mutex::new(Vec::new())),
         }
     }
 }
 struct FakeSession {
     scenario: Scenario,
     authenticated: Arc<AtomicUsize>,
+    passwords: Arc<Mutex<Vec<String>>>,
 }
 impl Connector for FakeConnector {
     fn handshake(&self, _: &Config) -> Result<Box<dyn RemoteSession>> {
@@ -90,6 +96,7 @@ impl Connector for FakeConnector {
         Ok(Box::new(FakeSession {
             scenario,
             authenticated: self.authenticated.clone(),
+            passwords: self.passwords.clone(),
         }))
     }
 }
@@ -97,8 +104,16 @@ impl RemoteSession for FakeSession {
     fn host_key(&self) -> Result<HostKey> {
         Ok(self.scenario.key.clone())
     }
-    fn authenticate(&mut self, _: &Config) -> Result<()> {
+    fn authenticate(&mut self, config: &Config) -> Result<()> {
         self.authenticated.fetch_add(1, Ordering::SeqCst);
+        if config.password_auth {
+            // Mirrors the real transport: the entered password, otherwise the saved one.
+            let password = resolve_password(config)?;
+            self.passwords
+                .lock()
+                .unwrap()
+                .push(password.expose().to_string());
+        }
         if self.scenario.auth_error {
             Err(error(ErrorCode::Authentication))
         } else {
@@ -388,4 +403,152 @@ fn configuration_validation_allows_real_ssh_ports_and_ipv6_but_rejects_urls_and_
     ] {
         assert!(allowed_ip(ip.parse().unwrap()));
     }
+}
+
+#[derive(Default)]
+struct MemoryStore(Mutex<HashMap<String, String>>);
+impl CredentialStore for MemoryStore {
+    fn get(&self, slot: &str) -> providers::Result<Option<String>> {
+        Ok(self.0.lock().unwrap().get(slot).cloned())
+    }
+    fn set(&self, slot: &str, value: &str) -> providers::Result<()> {
+        self.0.lock().unwrap().insert(slot.into(), value.into());
+        Ok(())
+    }
+    fn delete(&self, slot: &str) -> providers::Result<()> {
+        self.0.lock().unwrap().remove(slot);
+        Ok(())
+    }
+}
+/// One process-wide store, matching the app; each password test uses its own username.
+fn passwords() -> Arc<MemoryStore> {
+    static STORE: std::sync::OnceLock<Arc<MemoryStore>> = std::sync::OnceLock::new();
+    STORE
+        .get_or_init(|| {
+            let store = Arc::new(MemoryStore::default());
+            install_password_store(store.clone());
+            store
+        })
+        .clone()
+}
+fn password_config(username: &str, password: Option<&str>) -> Config {
+    let mut c = config();
+    c.username = username.into();
+    c.password_auth = true;
+    c.password = password.map(Secret::new);
+    c
+}
+#[test]
+fn password_is_kept_in_the_credential_store_not_settings() {
+    let store = passwords();
+    let f = Fixture::new();
+    let mut s = f.service();
+    let probe = s
+        .connect(password_config("pw-store", Some("synthetic-pass")))
+        .unwrap();
+    let state = s.confirm_host(&probe.challenge.unwrap().id).unwrap();
+    assert_eq!(state.status, ConnectionStatus::Connected);
+    assert_eq!(*f.connector.passwords.lock().unwrap(), ["synthetic-pass"]);
+    let saved =
+        f.db.setting::<serde_json::Value>("providers.sftp.profile")
+            .unwrap();
+    assert_eq!(saved["passwordAuth"], json!(true));
+    assert!(!saved.to_string().contains("synthetic-pass"));
+    let returned = serde_json::to_string(&state).unwrap();
+    assert!(!returned.contains("synthetic-pass"));
+    assert!(!returned.contains("\"password\""));
+    assert!(!format!("{:?}", state.profile).contains("synthetic-pass"));
+    assert_eq!(
+        store
+            .get("sftp.password:pw-store@[music.example.test]:2222")
+            .unwrap()
+            .as_deref(),
+        Some("synthetic-pass")
+    );
+    // A new service (app restart) reconnects with the saved password.
+    let mut restarted = f.service();
+    restarted.reconnect().unwrap();
+    assert_eq!(
+        *f.connector.passwords.lock().unwrap(),
+        ["synthetic-pass", "synthetic-pass"]
+    );
+    restarted.disconnect().unwrap();
+    assert_eq!(
+        store
+            .get("sftp.password:pw-store@[music.example.test]:2222")
+            .unwrap(),
+        None
+    );
+}
+#[test]
+fn missing_or_rejected_password_does_not_save_anything() {
+    let store = passwords();
+    let f = Fixture::new();
+    let mut s = f.service();
+    let probe = s.connect(password_config("pw-missing", None)).unwrap();
+    let err = s.confirm_host(&probe.challenge.unwrap().id).err().unwrap();
+    assert_eq!(err.code, ErrorCode::PasswordMissing);
+    f.connector.scenario.lock().unwrap().auth_error = true;
+    // The server key was trusted above, so this connect authenticates directly.
+    let err = s
+        .connect(password_config("pw-missing", Some("wrong")))
+        .err()
+        .unwrap();
+    assert_eq!(err.code, ErrorCode::Authentication);
+    assert!(f
+        .db
+        .setting::<serde_json::Value>("providers.sftp.profile")
+        .is_none());
+    assert_eq!(
+        store
+            .get("sftp.password:pw-missing@[music.example.test]:2222")
+            .unwrap(),
+        None
+    );
+}
+#[test]
+fn switching_to_key_sign_in_removes_the_saved_password() {
+    let store = passwords();
+    let f = Fixture::new();
+    let mut s = f.service();
+    let probe = s
+        .connect(password_config("pw-switch", Some("synthetic-pass")))
+        .unwrap();
+    s.confirm_host(&probe.challenge.unwrap().id).unwrap();
+    let mut agent = config();
+    agent.username = "pw-switch".into();
+    s.connect(agent).unwrap();
+    let saved =
+        f.db.setting::<serde_json::Value>("providers.sftp.profile")
+            .unwrap();
+    assert!(saved.get("passwordAuth").is_none());
+    assert_eq!(
+        store
+            .get("sftp.password:pw-switch@[music.example.test]:2222")
+            .unwrap(),
+        None
+    );
+}
+#[test]
+fn password_configuration_is_validated() {
+    let mut c = config();
+    c.password = Some(Secret::new("x"));
+    assert_eq!(c.validate().err().unwrap().code, ErrorCode::InvalidConfig);
+    let mut c = password_config("pw-valid", Some(""));
+    assert!(c.clone().validate().is_err());
+    c.password = Some(Secret::new("a\0b"));
+    assert!(c.clone().validate().is_err());
+    c.password = Some(Secret::new("ok"));
+    c.identity_file = Some("/home/user/.ssh/id_ed25519".into());
+    assert!(c.validate().is_err());
+    let legacy: Config = serde_json::from_value(json!({
+        "host": "music.example.test", "port": 22, "username": "u",
+        "root": "/m", "identityFile": null
+    }))
+    .unwrap();
+    assert!(!legacy.password_auth);
+    assert_eq!(
+        serde_json::to_value(&legacy).unwrap(),
+        json!({"host": "music.example.test", "port": 22, "username": "u", "root": "/m", "identityFile": null})
+    );
 }

@@ -274,6 +274,8 @@ mod tests {
             username: "listener".into(),
             root: "/music".into(),
             identity_file: None,
+            password_auth: false,
+            password: None,
         };
         db.set_setting("providers.sftp.profile", &Some(&config))
             .unwrap();

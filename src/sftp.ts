@@ -7,6 +7,10 @@ export interface SftpConfig {
   username: string;
   root: string;
   identityFile: string | null;
+  /** Sign in with a password saved in the system keyring. */
+  passwordAuth?: boolean;
+  /** Sent only when connecting; never returned by Muse. */
+  password?: string;
 }
 export interface ServerKey {
   algorithm: string;
@@ -99,7 +103,10 @@ export function sftpMessage(value: unknown): string {
       "Could not reach the server. Check the address, SSH port, router forwarding, and network, then retry.",
     protocol: "This server did not provide a supported SSH/SFTP connection.",
     authentication:
-      "SSH key authentication failed. Check your username and that your public key is authorized. Unlock encrypted keys in your SSH agent.",
+      "SSH sign-in failed. Check your username and password, or that your public key is authorized. Unlock encrypted keys in your SSH agent.",
+    password_missing: "Enter your SSH password and connect again.",
+    credential_store:
+      "Muse could not use the system keyring for your SSH password. Unlock it and retry.",
     key_file:
       "Choose a readable private key, not the .pub file. Restrict its permissions or unlock encrypted keys in your SSH agent.",
     host_key_changed:

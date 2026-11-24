@@ -28,6 +28,15 @@ const blank: SftpConfig = {
   root: "/",
   identityFile: null,
 };
+type SignIn = "password" | "agent" | "file";
+const signInHelp: Record<SignIn, string> = {
+  password:
+    "Use the SSH account password from the server owner. Muse saves it in your system keyring, not in its library.",
+  agent:
+    "Your friend adds your public key to the server. Keep the private key on this computer. For an encrypted key, unlock it in your SSH agent first.",
+  file:
+    "Your friend adds your public key to the server. Keep the private key on this computer. For an encrypted key, unlock it in your SSH agent first.",
+};
 const statusLabels = {
   disconnected: "Not connected",
   configured: "Saved connection · reconnect to check",
@@ -51,7 +60,8 @@ export function SftpScreen() {
   const [syncBusy, setSyncBusy] = useState(false);
   const [state, setState] = useState<SftpState | null>(null);
   const [config, setConfig] = useState<SftpConfig>(blank);
-  const [auth, setAuth] = useState<"agent" | "file">("agent");
+  const [auth, setAuth] = useState<SignIn>("agent");
+  const [password, setPassword] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -66,7 +76,13 @@ export function SftpScreen() {
     setState(value);
     if (value.profile) {
       setConfig(value.profile);
-      setAuth(value.profile.identityFile ? "file" : "agent");
+      setAuth(
+        value.profile.passwordAuth
+          ? "password"
+          : value.profile.identityFile
+            ? "file"
+            : "agent",
+      );
     }
   }
   useEffect(() => {
@@ -172,11 +188,17 @@ export function SftpScreen() {
     await run("Cancelling verification…", () => sftp.cancelHost(id));
   }
   const disabled = !!busy || !!challenge || !!sync?.running || syncBusy;
+  // A saved password belongs to this exact account and server; editing them needs a new one.
+  const savedPassword =
+    !!state?.profile?.passwordAuth &&
+    state.profile.host === config.host &&
+    state.profile.port === config.port &&
+    state.profile.username === config.username;
   const listing = state?.listing;
   return (
     <div className="provider-page sftp-page">
       <Heading overline="MUSIC SOURCE" title="SSH / SFTP.">
-        Connect your remote music folder using an SSH key.
+        Connect your remote music folder with an SSH password or key.
       </Heading>
       <section
         className="provider-section"
@@ -248,8 +270,9 @@ export function SftpScreen() {
                     if (alive.current) {
                       setConfig(blank);
                       setAuth("agent");
+                      setPassword("");
                       setNotice(
-                        "SSH disconnected. Your private keys and local music were not changed.",
+                        "SSH disconnected. Any saved SSH password was removed; your private keys and local music were not changed.",
                       );
                     }
                   })
@@ -321,14 +344,29 @@ export function SftpScreen() {
           aria-describedby={error ? "sftp-error" : undefined}
           onSubmit={(event) => {
             event.preventDefault();
-            void run("Connecting to SSH…", () =>
-              connection(() =>
-                sftp.connect({
-                  ...config,
-                  identityFile: auth === "agent" ? null : config.identityFile,
-                }),
-              ),
-            );
+            const base: SftpConfig = {
+              host: config.host,
+              port: config.port,
+              username: config.username,
+              root: config.root,
+              identityFile: config.identityFile,
+            };
+            const request: SftpConfig =
+              auth === "password"
+                ? {
+                    ...base,
+                    identityFile: null,
+                    passwordAuth: true,
+                    ...(password ? { password } : {}),
+                  }
+                : {
+                    ...base,
+                    identityFile: auth === "agent" ? null : config.identityFile,
+                  };
+            void run("Connecting to SSH…", async () => {
+              await connection(() => sftp.connect(request));
+              if (alive.current) setPassword("");
+            });
           }}
         >
           <label htmlFor="sftp-host">Host</label>
@@ -383,16 +421,35 @@ export function SftpScreen() {
             disabled={disabled}
             required
           />
-          <label htmlFor="sftp-auth">SSH key</label>
+          <label htmlFor="sftp-auth">Sign in with</label>
           <select
             id="sftp-auth"
             value={auth}
-            onChange={(e) => setAuth(e.target.value as "agent" | "file")}
+            onChange={(e) => setAuth(e.target.value as SignIn)}
             disabled={disabled}
           >
+            <option value="password">Password</option>
             <option value="agent">SSH agent</option>
             <option value="file">Private key file</option>
           </select>
+          {auth === "password" && (
+            <>
+              <label htmlFor="sftp-password">Password</label>
+              <input
+                id="sftp-password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder={
+                  savedPassword ? "Saved in system keyring" : undefined
+                }
+                maxLength={1024}
+                autoComplete="current-password"
+                disabled={disabled}
+                required={!savedPassword}
+              />
+            </>
+          )}
           {auth === "file" && (
             <div className="sftp-key-picker">
               <p className="sub">
@@ -419,15 +476,14 @@ export function SftpScreen() {
               </button>
             </div>
           )}
-          <p className="sub">
-            Your friend adds your public key to the server. Keep the private key
-            on this computer. For an encrypted key, unlock it in your SSH agent
-            first.
-          </p>
+          <p className="sub">{signInHelp[auth]}</p>
           <button
             className="primary"
             disabled={
-              disabled || !state || (auth === "file" && !config.identityFile)
+              disabled ||
+              !state ||
+              (auth === "file" && !config.identityFile) ||
+              (auth === "password" && !password && !savedPassword)
             }
           >
             Connect SSH
@@ -622,7 +678,7 @@ export function SftpScreen() {
               className="primary"
               disabled={!verified || !!busy}
               onClick={() =>
-                void run("Authenticating SSH key…", async () => {
+                void run("Signing in…", async () => {
                   const id = challenge.id;
                   setChallenge(null);
                   pending.current = null;
