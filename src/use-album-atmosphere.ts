@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
+import { useAppearance } from "./appearance";
 import {
   cachedAtmosphere,
+  lightAtmosphere,
   loadAtmosphere,
   type AlbumAtmosphere,
 } from "./album-atmosphere";
@@ -24,4 +26,11 @@ export function useAlbumAtmosphere(source?: string) {
   return result && result.source === source
     ? result.theme
     : cachedAtmosphere(source);
+}
+
+/** The cover palette for the current appearance (Now Playing and the mini player use the dark one). */
+export function useAppearanceAtmosphere(source?: string) {
+  const dark = useAlbumAtmosphere(source);
+  const { scheme } = useAppearance();
+  return scheme === "light" ? lightAtmosphere(dark) : dark;
 }

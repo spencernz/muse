@@ -57,6 +57,48 @@ export const defaultAtmosphere: AlbumAtmosphere = {
   muted: "#aaaaaa",
 };
 
+export const defaultLightAtmosphere: AlbumAtmosphere = {
+  accent: "#161616",
+  onAccent: "#fafafa",
+  background: "#f7f7f7",
+  surface: "#ececec",
+  muted: "#5c5c5c",
+};
+const paper: RGB = [250, 250, 251];
+const parse = (value: string): RGB =>
+  [1, 3, 5].map((i) => parseInt(value.slice(i, i + 2), 16)) as [
+    number,
+    number,
+    number,
+  ];
+/**
+ * Light-appearance palette for the same cover. The dark background is mix(ink, colour, 0.12),
+ * so the cover colour is recovered from it, then re-derived against paper with the same 4.6:1 targets.
+ */
+export function lightAtmosphere(dark: AlbumAtmosphere): AlbumAtmosphere {
+  if (dark.background === defaultAtmosphere.background)
+    return defaultLightAtmosphere;
+  const background = parse(dark.background);
+  const colour = [0, 1, 2].map((i) =>
+    Math.min(255, Math.max(0, (background[i] - ink[i] * 0.88) / 0.12)),
+  ) as unknown as RGB;
+  const light = mix(paper, colour, 0.08);
+  const surface = mix(paper, colour, 0.18);
+  let accent = mix(colour, ink, 0.25);
+  while (contrast(accent, surface) < 4.6) accent = mix(accent, ink, 0.1);
+  const onAccent =
+    contrast(white, accent) >= contrast(ink, accent) ? white : ink;
+  let muted = mix(colour, ink, 0.55);
+  while (contrast(muted, surface) < 4.6) muted = mix(muted, ink, 0.1);
+  return {
+    accent: hex(accent),
+    onAccent: hex(onAccent),
+    background: hex(light),
+    surface: hex(surface),
+    muted: hex(muted),
+  };
+}
+
 /** Quantized, population-weighted colour buckets keep competing hues separate. */
 export function atmosphereFromPixels(
   pixels: ArrayLike<number>,

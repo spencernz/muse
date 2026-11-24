@@ -2,14 +2,6 @@
 :root {
   --sidebar-width: 248px;
   --content-padding: clamp(32px, 3vw, 48px);
-  --muse-canvas: #151515;
-  --muse-sidebar: #111111;
-  --muse-player: #1a1a1a;
-  --muse-raised: #222222;
-  --muse-text: #eeeeee;
-  --muse-muted: #aaaaaa;
-  --muse-accent: #eeeeee;
-  --muse-on-accent: #111111;
 }
 
 .app {
@@ -164,19 +156,25 @@
 }
 
 .secondary:hover,.topbtn:hover {
-  background: #373737;
+  background: var(--muse-control-hover);
 }
 
 .content .artwork {
-  background: #353535;
+  background: var(--muse-art);
 }
 
 .content .artwork:after {
   display: none;
 }
 
-.tile-caption,.tile-edit-controls {
+/* Captions sit on artwork, so they stay dark in every appearance. */
+.tile-caption {
   background: #242424;
+  color: #eeeeee;
+}
+
+.tile-edit-controls {
+  background: var(--muse-control);
 }
 
 .albumcard:hover .cover,.tile:hover {
@@ -188,7 +186,7 @@
 }
 
 .track-row {
-  border-bottom-color: #ffffff09;
+  border-bottom-color: var(--muse-line);
 }
 
 .track-row.playing {
@@ -208,7 +206,7 @@
   background: var(--muse-player);
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
-  border-top: 1px solid #373737;
+  border-top: 1px solid var(--muse-line-strong);
   transition: none;
 }
 
@@ -282,7 +280,7 @@
 }
 
 .player .artwork {
-  background: #353535;
+  background: var(--muse-art);
 }
 
 .player .artwork .art-text,.player .artwork .art-sub {
@@ -447,8 +445,8 @@
 }
 
 .content-navigation .content-back:hover:not(:disabled),.now-close.iconbtn:hover {
-  background: #373737;
-  border-color: #585858;
+  background: var(--muse-control-hover);
+  border-color: var(--muse-line-strong);
 }
 
 .tile-cell .tile-caption {
@@ -500,7 +498,7 @@
 .provider-section {
   margin-top: 32px;
   padding-block: 24px;
-  border-top: 1px solid #ffffff14;
+  border-top: 1px solid var(--muse-line);
 }
 
 .provider-section .section-title {
@@ -563,7 +561,7 @@
   padding: 10px 12px;
   background: var(--muse-raised);
   color: var(--muse-text);
-  border: 1px solid #a5a5a5;
+  border: 1px solid var(--muse-control-border);
   border-radius: 0;
   font-size: 14px;
 }
@@ -649,7 +647,7 @@
   gap: 16px;
   min-height: 48px;
   padding-block: 8px;
-  border-bottom: 1px solid #ffffff14;
+  border-bottom: 1px solid var(--muse-line);
 }
 
 .sftp-file>div,.sftp-file button,.sftp-file div>span {

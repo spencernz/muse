@@ -4,6 +4,8 @@ import {
   atmosphereFromPixels,
   contrast,
   defaultAtmosphere,
+  defaultLightAtmosphere,
+  lightAtmosphere,
   loadAtmosphere,
 } from "./album-atmosphere";
 import { useAlbumAtmosphere } from "./use-album-atmosphere";
@@ -68,6 +70,27 @@ it("derives distinct warm, cool and pale palettes with readable text", () => {
       );
     }
   }
+});
+it("derives readable light palettes that keep each cover's hue", () => {
+  const dark = [
+    [230, 60, 25],
+    [50, 70, 210],
+    [215, 200, 170],
+  ].map((colour) => atmosphereFromPixels(pixels(colour)));
+  const light = dark.map(lightAtmosphere);
+  expect(new Set(light.map((t) => t.accent)).size).toBe(3);
+  expect(lightAtmosphere(defaultAtmosphere)).toEqual(defaultLightAtmosphere);
+  for (const t of [...light, defaultLightAtmosphere]) {
+    expect(contrast(rgb(t.accent), rgb(t.onAccent))).toBeGreaterThanOrEqual(4.5);
+    for (const surface of [t.background, t.surface]) {
+      expect(contrast(rgb(t.accent), rgb(surface))).toBeGreaterThanOrEqual(4.5);
+      expect(contrast(rgb(t.muted), rgb(surface))).toBeGreaterThanOrEqual(4.5);
+      expect(contrast([22, 22, 22], rgb(surface))).toBeGreaterThanOrEqual(4.5);
+    }
+  }
+  // A warm cover stays warm: red outweighs blue in the light accent.
+  const warm = rgb(light[0].accent);
+  expect(warm[0]).toBeGreaterThan(warm[2]);
 });
 it("uses the Graphite fallback for monochrome, transparent and empty art", () => {
   expect(defaultAtmosphere.accent).toBe("#eeeeee");

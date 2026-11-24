@@ -27,7 +27,12 @@ import { PlexScreen } from "./plex";
 import { SettingsScreen } from "./settings";
 import type { Page } from "../types";
 import { api, artwork, native } from "../native";
-import { useAlbumAtmosphere } from "../use-album-atmosphere";
+import {
+  useAlbumAtmosphere,
+  useAppearanceAtmosphere,
+} from "../use-album-atmosphere";
+import { lightAtmosphere } from "../album-atmosphere";
+import { useAppearance } from "../appearance";
 import { useAlbumNavigation } from "../use-album-navigation";
 import { AiPlaylistDialog } from "./ai-playlist";
 
@@ -58,7 +63,10 @@ export function App() {
       : undefined,
   );
   const albumSource = artwork(albumCover);
-  const albumTheme = useAlbumAtmosphere(albumSource);
+  const { scheme } = useAppearance();
+  const albumTheme = useAppearanceAtmosphere(albumSource);
+  // Now Playing stays dark; the shell accent follows the appearance.
+  const shell = scheme === "light" ? lightAtmosphere(theme) : theme;
   const albumStyle = Object.fromEntries(
     Object.entries(albumTheme).map(([key, value]) => [
       `--album-${key === "onAccent" ? "on-accent" : key}`,
@@ -66,8 +74,8 @@ export function App() {
     ]),
   ) as CSSProperties;
   const themeStyle = {
-    "--muse-accent": theme.accent,
-    "--muse-on-accent": theme.onAccent,
+    "--muse-accent": shell.accent,
+    "--muse-on-accent": shell.onAccent,
     "--now-accent": theme.accent,
     "--now-on-accent": theme.onAccent,
     "--now-background": theme.background,

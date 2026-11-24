@@ -1,5 +1,5 @@
 /* Match Muse's existing dark, editorial navigation and native dialogs. */
-.sidebar-playlists { border-top: 1px solid var(--line, #383838); padding-top: 16px; margin-top: -16px; min-width: 0; }
+.sidebar-playlists { border-top: 1px solid var(--line, var(--muse-line-strong)); padding-top: 16px; margin-top: -16px; min-width: 0; }
 .sidebar-playlists .nav { gap: 4px; }
 .sidebar-playlists .nav button { width: 100%; text-align: left; min-width: 0; }
 .sidebar-playlists .nav button span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -9,7 +9,7 @@
 .mood-fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
 .mood-fieldset legend { font-size: 14px; font-weight: 600; padding: 0 0 12px; }
 .mood-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-bottom: 12px; }
-.mood-option { display: flex; align-items: flex-start; gap: 10px; padding: 14px; border: 1px solid var(--line, #474747); border-radius: 0; cursor: pointer; min-height: 80px; }
+.mood-option { display: flex; align-items: flex-start; gap: 10px; padding: 14px; border: 1px solid var(--line, var(--muse-line-strong)); border-radius: 0; cursor: pointer; min-height: 80px; }
 .mood-option.selected { border-color: var(--muse-accent); background: var(--muse-raised); }
 .mood-option:focus-within { outline: 2px solid var(--muse-accent); outline-offset: 2px; }
 .mood-option input { width: 16px; height: 16px; margin: 3px 0 0; accent-color: var(--muse-accent); flex-shrink: 0; }
@@ -28,7 +28,7 @@
 .ai-mood-heading .sub { margin: 0; font-size: 14px; }
 .ai-mood-heading > button { flex-shrink: 0; }
 .ai-mood-tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
-.ai-mood-tile { display: flex; flex-direction: row; justify-content: flex-start; align-items: center; gap: 12px; text-align: left; min-width: 0; min-height: 88px; padding: 14px; border: 1px solid var(--line, #474747); border-radius: 0; background: var(--muse-raised); color: var(--muse-text, #f6f6f6); transition: border-color 150ms, background-color 150ms; }
+.ai-mood-tile { display: flex; flex-direction: row; justify-content: flex-start; align-items: center; gap: 12px; text-align: left; min-width: 0; min-height: 88px; padding: 14px; border: 1px solid var(--line, var(--muse-line-strong)); border-radius: 0; background: var(--muse-raised); color: var(--muse-text, #f6f6f6); transition: border-color 150ms, background-color 150ms; }
 .ai-mood-tile:hover:not(:disabled) { border-color: var(--mood-color); background: color-mix(in srgb, var(--mood-color) 13%, var(--muse-raised)); }
 .ai-mood-tile:disabled { cursor: wait; opacity: .72; }
 .ai-mood-tile > svg { flex: 0 0 22px; color: var(--mood-color); }
@@ -40,7 +40,7 @@
 .tone-orange { --mood-color: #9e9e9e; } .tone-violet { --mood-color: #9a9a9a; }
 .tone-slate { --mood-color: #b2b2b2; } .tone-green { --mood-color: #b1b1b1; }
 .ai-mood-status,.ai-mood-error { display: flex; align-items: center; gap: 12px; margin: 12px 0 0; font-size: 14px; }
-.ai-mood-error { color: #aeaeae; flex-wrap: wrap; }
+.ai-mood-error { color: var(--muse-muted); flex-wrap: wrap; }
 @media (max-width: 1000px) { .ai-mood-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } .ai-mood-heading { flex-wrap: wrap; } }
 @media (max-width: 460px) { .ai-mood-tile { min-height: 76px; padding: 10px; gap: 8px; } .ai-mood-tile small { font-size: 12px; } }
 @media (prefers-reduced-motion: reduce) { .ai-mood-tile { transition: none; } }

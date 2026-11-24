@@ -7,8 +7,8 @@
     -apple-system,
     BlinkMacSystemFont,
     sans-serif;
-  color: #f6f6f6;
-  background: #111111;
+  color: var(--muse-text);
+  background: var(--muse-root);
   font-synthesis: none;
 }
 * {
@@ -33,15 +33,15 @@ input:focus-visible {
   height: min(800px, 94vh);
   min-height: 590px;
   display: flex;
-  background: #121212;
-  border: 1px solid #2c2c2c;
+  background: var(--muse-canvas);
+  border: 1px solid var(--muse-line);
   border-radius: 0;
   overflow: hidden;
 }
 .sidebar {
   width: 206px;
-  background: #181818;
-  border-right: 1px solid #2b2b2b;
+  background: var(--muse-sidebar);
+  border-right: 1px solid var(--muse-line);
   padding: 24px 12px;
   display: flex;
   flex-direction: column;
@@ -69,7 +69,7 @@ input:focus-visible {
   width: 100%;
   border: none;
   background: none;
-  color: #a6a6a6;
+  color: var(--muse-muted);
   text-align: left;
   padding: 11px 12px;
   border-radius: 0;
@@ -77,8 +77,8 @@ input:focus-visible {
 }
 .nav button:hover,
 .nav button.active {
-  color: white;
-  background: #272727;
+  color: var(--muse-text);
+  background: var(--muse-control);
 }
 .nav button.active {
   box-shadow: inset 3px 0 var(--muse-accent);
@@ -101,11 +101,11 @@ input:focus-visible {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 1px solid #272727;
+  border-bottom: 1px solid var(--muse-line);
   gap: 12px;
 }
 .breadcrumb {
-  color: #959595;
+  color: var(--muse-muted);
   font-size: 12px;
 }
 .tools {
@@ -114,9 +114,9 @@ input:focus-visible {
   gap: 12px;
 }
 .search {
-  background: #232323;
-  border: 1px solid #313131;
-  color: white;
+  background: var(--muse-control);
+  border: 1px solid var(--muse-line);
+  color: var(--muse-text);
   border-radius: 0;
   padding: 9px 12px;
   width: 220px;
@@ -127,7 +127,7 @@ input:focus-visible {
   border-color: var(--muse-accent);
 }
 .topbtn {
-  border: 1px solid #545454;
+  border: 1px solid var(--muse-line-strong);
   background: color-mix(in srgb, var(--muse-accent) 16%, var(--muse-canvas));
   color: var(--muse-accent);
   font-size: 12px;
@@ -154,7 +154,7 @@ input:focus-visible {
   line-height: 1.15;
 }
 .sub {
-  color: #969696;
+  color: var(--muse-muted);
   font-size: 13px;
   margin-bottom: 23px;
 }
@@ -309,7 +309,7 @@ input:focus-visible {
 }
 .albumartist {
   font-size: 12px;
-  color: #929292;
+  color: var(--muse-muted);
   margin-top: 3px;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -323,15 +323,15 @@ input:focus-visible {
 }
 .pill {
   padding: 8px 13px;
-  border: 1px solid #383838;
+  border: 1px solid var(--muse-line-strong);
   border-radius: 0;
-  background: #232323;
-  color: #b9b9b9;
+  background: var(--muse-control);
+  color: var(--muse-text-soft);
   font-size: 12px;
 }
 .pill.selected {
   background: color-mix(in srgb, var(--muse-accent) 24%, var(--muse-canvas));
-  color: white;
+  color: var(--muse-text);
   border-color: var(--muse-accent);
 }
 .detail {
@@ -350,7 +350,7 @@ input:focus-visible {
   font-size: 38px;
 }
 .detail small {
-  color: #bbbbbb;
+  color: var(--muse-text-soft);
   font-size: 12px;
 }
 .primary {
@@ -363,9 +363,9 @@ input:focus-visible {
   font-size: 12px;
 }
 .secondary {
-  border: 1px solid #454545;
-  background: #272727;
-  color: #d8d8d8;
+  border: 1px solid var(--muse-line-strong);
+  background: var(--muse-control);
+  color: var(--muse-text-soft);
   padding: 10px 14px;
   border-radius: 0;
   font-size: 12px;
@@ -385,20 +385,20 @@ input:focus-visible {
   text-align: left;
   padding: 12px 9px;
   background: transparent;
-  color: #ededed;
+  color: var(--muse-text);
   border: 0;
-  border-bottom: 1px solid #2b2b2b;
+  border-bottom: 1px solid var(--muse-line);
   font-size: 12px;
 }
 .track-row:hover,
 .track-row.playing {
-  background: #252525;
+  background: var(--muse-control);
 }
 .track-row.playing {
   color: var(--muse-accent);
 }
 .muted {
-  color: #969696;
+  color: var(--muse-muted);
 }
 .track-name {
   font-weight: 600;
@@ -408,8 +408,8 @@ input:focus-visible {
 }
 .player {
   flex-shrink: 0;
-  border-top: 1px solid #373737;
-  background: #1a1a1a;
+  border-top: 1px solid var(--muse-line-strong);
+  background: var(--muse-player);
   padding: 11px 24px 8px;
 }
 .player-main {
@@ -437,7 +437,7 @@ input:focus-visible {
 }
 .track-meta .artist {
   font-size: 11px;
-  color: #a6a6a6;
+  color: var(--muse-muted);
   margin-top: 4px;
   white-space: nowrap;
   overflow: hidden;
@@ -453,12 +453,12 @@ input:focus-visible {
 .iconbtn {
   border: none;
   background: transparent;
-  color: #cccccc;
+  color: var(--muse-text-soft);
   font-size: 19px;
   padding: 6px;
 }
 .iconbtn:hover {
-  color: white;
+  color: var(--muse-text);
 }
 .playbtn {
   background: var(--muse-accent);
@@ -471,7 +471,7 @@ input:focus-visible {
 }
 .time {
   font-size: 11px;
-  color: #a9a9a9;
+  color: var(--muse-muted);
   font-variant-numeric: tabular-nums;
 }
 .progress {
@@ -494,8 +494,8 @@ input:focus-visible {
   accent-color: var(--muse-accent);
 }
 .empty {
-  border: 1px dashed #474747;
-  color: #a7a7a7;
+  border: 1px dashed var(--muse-line-strong);
+  color: var(--muse-muted);
   padding: 45px 22px;
   text-align: center;
   border-radius: 0;

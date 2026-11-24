@@ -1,0 +1,93 @@
+/* Appearance tokens. Dark values reproduce the original Muse look; Light is applied with data-theme="light" on <html>. */
+:root {
+  color-scheme: dark;
+  --muse-root: #111111;
+  --muse-canvas: #151515;
+  --muse-sidebar: #111111;
+  --muse-player: #1a1a1a;
+  --muse-raised: #222222;
+  --muse-dialog: #1c1c1c;
+  --muse-control: #272727;
+  --muse-control-hover: #373737;
+  --muse-art: #353535;
+  --muse-line: #2c2c2c;
+  --muse-line-strong: #474747;
+  --muse-control-border: #a5a5a5;
+  --muse-text: #eeeeee;
+  --muse-text-soft: #c1c1c1;
+  --muse-muted: #aaaaaa;
+  --muse-scrollbar: #444444;
+  --muse-scroll-thumb: #ffffff66;
+  --muse-scroll-thumb-hover: #ffffff99;
+  --muse-accent: #eeeeee;
+  --muse-on-accent: #111111;
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+  --muse-root: #e9e9e9;
+  --muse-canvas: #f7f7f7;
+  --muse-sidebar: #ececec;
+  --muse-player: #efefef;
+  --muse-raised: #ffffff;
+  --muse-dialog: #ffffff;
+  --muse-control: #ffffff;
+  --muse-control-hover: #e4e4e4;
+  --muse-art: #d4d4d4;
+  --muse-line: #dddddd;
+  --muse-line-strong: #b3b3b3;
+  --muse-control-border: #757575;
+  --muse-text: #161616;
+  --muse-text-soft: #333333;
+  --muse-muted: #5c5c5c;
+  --muse-scrollbar: #b0b0b0;
+  --muse-scroll-thumb: #00000052;
+  --muse-scroll-thumb-hover: #00000080;
+  --muse-accent: #161616;
+  --muse-on-accent: #fafafa;
+}
+
+/* Mood tones are near-identical greys tuned for dark tiles; give them readable light equivalents. */
+:root[data-theme="light"] [class*="tone-"] {
+  --mood-color: #4f4f4f;
+}
+
+/* Now Playing stays immersive and dark in every appearance. */
+:root[data-theme="light"] .app--now {
+  color-scheme: dark;
+  --muse-root: #111111;
+  --muse-canvas: #151515;
+  --muse-sidebar: #111111;
+  --muse-player: #1a1a1a;
+  --muse-raised: #222222;
+  --muse-dialog: #1c1c1c;
+  --muse-control: #272727;
+  --muse-control-hover: #373737;
+  --muse-art: #353535;
+  --muse-line: #2c2c2c;
+  --muse-line-strong: #474747;
+  --muse-control-border: #a5a5a5;
+  --muse-text: #eeeeee;
+  --muse-text-soft: #c1c1c1;
+  --muse-muted: #aaaaaa;
+  --muse-scrollbar: #444444;
+  --muse-scroll-thumb: #ffffff66;
+  --muse-scroll-thumb-hover: #ffffff99;
+  color: var(--muse-text);
+}
+
+/* Light surfaces are close in value, so outlined buttons need a visible edge. */
+:root[data-theme="light"] .secondary,
+:root[data-theme="light"] .topbtn {
+  border-color: var(--muse-line-strong);
+}
+
+/* The album backdrop is blurred cover art; in Light it is washed toward paper instead of ink. */
+:root[data-theme="light"] .album-panel-overlay {
+  background:
+    linear-gradient(90deg, #f7f7f8d1, #f7f7f8eb),
+    linear-gradient(0deg, var(--album-background), transparent 70%);
+}
+:root[data-theme="light"] .album-panel-art {
+  opacity: 0.7;
+}

@@ -930,7 +930,7 @@ it("explains local catalog removal, supports cancel and retries without losing t
   const user=userEvent.setup();const source={id:"source-one",path:"/Music/Local",available:true,lastScan:0,error:null};
   act(()=>useMuse.setState({library:{...emptyLibrary,sources:[source]}}));vi.mocked(api.removeFolder).mockRejectedValueOnce("Folder could not be removed.").mockResolvedValue();
   vi.mocked(api.preferences).mockResolvedValue({closeBehavior:"quit",backgroundAvailable:true});
-  render(<SettingsScreen/>);await user.click(screen.getByRole("button",{name:"Remove folder /Music/Local"}));
+  render(<SettingsScreen/>);await user.click(screen.getByRole("tab",{name:/Library/}));await user.click(screen.getByRole("button",{name:"Remove folder /Music/Local"}));
   expect(screen.getByRole("dialog",{name:"Remove this music folder?"})).toHaveTextContent("Songs found only in this folder will be removed");expect(screen.getByText(/Your original music files stay in place/)).toBeVisible();
   await user.click(screen.getByRole("button",{name:"Cancel"}));expect(api.removeFolder).not.toHaveBeenCalled();
   await user.click(screen.getByRole("button",{name:"Remove folder /Music/Local"}));await user.click(screen.getByRole("button",{name:"Remove folder"}));

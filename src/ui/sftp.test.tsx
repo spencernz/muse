@@ -115,6 +115,7 @@ it("keeps SSH inside Settings while preserving the existing player and local dat
   vi.mocked(api.preferences).mockResolvedValue({closeBehavior:"quit",backgroundAvailable:true});
   await user.click(screen.getByRole("button", {name:"Settings"}));
   expect(await screen.findByRole("heading",{name:"Settings."})).toBeVisible();
+  await user.click(screen.getByRole("tab", {name:/Library/}));
   await user.click(screen.getByRole("button", {name:"Manage SSH / SFTP"}));
   expect(
     await screen.findByRole("heading", { name: "SSH / SFTP." }),

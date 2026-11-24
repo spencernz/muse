@@ -2,7 +2,7 @@ import { useEffect, useState, type CSSProperties } from "react";
 import { Heart, Pin, Play, Shuffle, Sparkles } from "lucide-react";
 import { useMuse } from "../store";
 import { api, artwork } from "../native";
-import { useAlbumAtmosphere } from "../use-album-atmosphere";
+import { useAppearanceAtmosphere } from "../use-album-atmosphere";
 import { AlbumCard, Cover, Empty, Heading } from "./shared";
 import { albumDisplayTitle, totalTime } from "../format";
 import { AlbumInfoDialog } from "./ai";
@@ -104,7 +104,7 @@ export function AlbumScreen() {
     tiles = useMuse((s) => s.library.tiles),
     revision = useMuse((s) => s.revision);
   const source = artwork(album?.cover);
-  const theme = useAlbumAtmosphere(source);
+  const theme = useAppearanceAtmosphere(source);
   const themeStyle = Object.fromEntries(
     Object.entries(theme).map(([key, value]) => [
       `--album-${key === "onAccent" ? "on-accent" : key}`,

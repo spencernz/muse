@@ -1,6 +1,5 @@
 /* Desktop adaptations and working states. Core measurements come from the supplied prototype. */
 :root {
-  color-scheme: dark;
   --sidebar-width: 206px;
   --content-gutters: 60px;
   --tile-gap: 9px;
@@ -74,17 +73,17 @@ input {
   text-align: left;
   justify-content: flex-start;
   padding: 10px 24px;
-  color: #949494;
+  color: var(--muse-muted);
   font-size: 12px;
   border-radius: 0;
 }
 .settings-button:hover,
 .settings-button.active {
   color: var(--muse-accent);
-  background: #272727;
+  background: var(--muse-control);
 }
 .content {
-  scrollbar-color: #444444 transparent;
+  scrollbar-color: var(--muse-scrollbar) transparent;
   scrollbar-width: thin;
   overscroll-behavior: contain;
   min-height: 0;
@@ -106,7 +105,7 @@ input {
   left: 12px;
   top: 50%;
   transform: translateY(-50%);
-  color: #a6a6a6;
+  color: var(--muse-muted);
   pointer-events: none;
 }
 .topbtn {
@@ -237,7 +236,7 @@ input {
 .tile-edit-controls {
   position: absolute;
   inset: auto 0 0;
-  background: #181818ed;
+  background: color-mix(in srgb, var(--muse-sidebar) 93%, transparent);
   padding: 7px;
   z-index: 4;
   display: flex;
@@ -246,9 +245,9 @@ input {
   justify-content: space-between;
 }
 .tile-edit-controls select {
-  background: #252525;
-  color: #f6f6f6;
-  border: 1px solid #525252;
+  background: var(--muse-control);
+  color: var(--muse-text);
+  border: 1px solid var(--muse-line-strong);
   border-radius: 0;
   min-width: 0;
   max-width: 100%;
@@ -311,17 +310,17 @@ input {
 }
 .sort-label {
   font-size: 11px;
-  color: #969696;
+  color: var(--muse-muted);
   display: flex;
   gap: 8px;
   align-items: center;
 }
 .sort-label select {
   padding: 8px;
-  border: 1px solid #383838;
+  border: 1px solid var(--muse-line-strong);
   border-radius: 0;
-  background: #232323;
-  color: #b9b9b9;
+  background: var(--muse-control);
+  color: var(--muse-text-soft);
   font-size: 12px;
 }
 .primary,
@@ -334,10 +333,10 @@ input {
   gap: 6px;
 }
 .primary:hover {
-  background: color-mix(in srgb, var(--muse-accent) 85%, white);
+  background: color-mix(in srgb, var(--muse-accent) 85%, var(--muse-text));
 }
 .secondary:hover {
-  background: #323232;
+  background: var(--muse-control-hover);
 }
 .secondary.active {
   color: var(--muse-accent);
@@ -361,7 +360,7 @@ input {
   margin-top: 15px;
 }
 .album-info {
-  color: #969696;
+  color: var(--muse-muted);
   font-size: 12px;
   margin-top: 6px;
 }
@@ -401,7 +400,7 @@ input {
   height: clamp(220px, calc(100dvh - 330px), 680px);
   overflow: auto;
   scrollbar-width: thin;
-  scrollbar-color: #444444 transparent;
+  scrollbar-color: var(--muse-scrollbar) transparent;
   contain: strict;
 }
 .track-row {
@@ -484,9 +483,9 @@ input {
   line-height: 1.6;
 }
 .notice-error {
-  background: #2a2a2a;
-  border-color: #5a5a5a;
-  color: #d3d3d3;
+  background: var(--muse-control);
+  border-color: var(--muse-line-strong);
+  color: var(--muse-text-soft);
 }
 .notice .iconbtn {
   padding: 1px;
@@ -498,7 +497,7 @@ input {
   gap: 8px;
   padding: 7px 28px;
   font-size: 11px;
-  background: #252525;
+  background: var(--muse-control);
   color: var(--muse-accent);
   min-width: 0;
 }
@@ -579,7 +578,7 @@ input {
   height: 310px;
   overflow: auto;
   scrollbar-width: thin;
-  scrollbar-color: #444444 transparent;
+  scrollbar-color: var(--muse-scrollbar) transparent;
   contain: strict;
 }
 .queue-row {
@@ -587,11 +586,11 @@ input {
   gap: 4px;
   align-items: center;
   padding: 4px 5px;
-  border-bottom: 1px solid #2b2b2b;
+  border-bottom: 1px solid var(--muse-line);
   font-size: 12px;
 }
 .queue-row.playing {
-  background: #252525;
+  background: var(--muse-control);
   color: var(--muse-accent);
 }
 .queue-track {
@@ -609,7 +608,7 @@ input {
 .queue-track small {
   display: block;
   font-size: 11px;
-  color: #969696;
+  color: var(--muse-muted);
   margin-top: 2px;
 }
 .queue-row .iconbtn {
@@ -677,10 +676,10 @@ dialog {
   max-height: 85dvh;
   width: min(480px, calc(100vw - 32px));
   overflow: auto;
-  border: 1px solid #4a4a4a;
+  border: 1px solid var(--muse-line-strong);
   border-radius: 0;
-  background: #1c1c1c;
-  color: #f6f6f6;
+  background: var(--muse-dialog);
+  color: var(--muse-text);
   padding: 22px;
   box-shadow: none;
   font-size: 13px;
@@ -707,9 +706,9 @@ dialog::backdrop {
   gap: 10px;
 }
 .dialog-form input {
-  background: #232323;
-  color: white;
-  border: 1px solid #4a4a4a;
+  background: var(--muse-control);
+  color: var(--muse-text);
+  border: 1px solid var(--muse-line-strong);
   border-radius: 0;
   padding: 11px;
   font-size: 13px;
@@ -717,7 +716,7 @@ dialog::backdrop {
 }
 .dialog-form label {
   font-size: 12px;
-  color: #b8b8b8;
+  color: var(--muse-text-soft);
 }
 .playlist-picker {
   display: flex;
@@ -732,20 +731,20 @@ dialog::backdrop {
 }
 .source-list {
   margin-top: 22px;
-  border-top: 1px solid #2c2c2c;
+  border-top: 1px solid var(--muse-line);
 }
 .source-row {
   display: flex;
   gap: 12px;
   align-items: center;
   padding: 17px 0;
-  border-bottom: 1px solid #2c2c2c;
+  border-bottom: 1px solid var(--muse-line);
   justify-content: space-between;
 }
 .source-row > div {
   min-width: 0;
 }
-.source-row h2 {
+.source-row h3 {
   font-size: 13px;
   font-weight: 600;
   overflow-wrap: anywhere;
@@ -757,26 +756,26 @@ dialog::backdrop {
   margin: 6px 0 0;
 }
 .warning {
-  color: #c1c1c1;
+  color: var(--muse-text-soft);
 }
 .scan-summary {
   margin-top: 12px;
 }
-.scan-issues ul {
+ul.scan-issues {
   list-style: none;
   margin: 0;
   padding: 0;
-  border-top: 1px solid #2c2c2c;
+  border-top: 1px solid var(--muse-line);
 }
 .scan-issues li {
   padding: 12px 0;
-  border-bottom: 1px solid #2c2c2c;
+  border-bottom: 1px solid var(--muse-line);
   font-size: 12px;
   overflow-wrap: anywhere;
 }
 .scan-issues li p {
   margin: 0 0 5px;
-  color: #c1c1c1;
+  color: var(--muse-text-soft);
 }
 .shortcuts {
   display: grid;
@@ -789,7 +788,7 @@ dialog::backdrop {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  border-bottom: 1px solid #2c2c2c;
+  border-bottom: 1px solid var(--muse-line);
   padding-bottom: 10px;
   font-size: 12px;
 }
@@ -798,7 +797,7 @@ dialog::backdrop {
   font-weight: 650;
 }
 .shortcuts dd {
-  color: #969696;
+  color: var(--muse-muted);
   margin: 0;
 }
 .skip-link {
@@ -807,7 +806,7 @@ dialog::backdrop {
   top: 8px;
   z-index: 100;
   background: var(--muse-accent);
-  color: #121212;
+  color: var(--muse-on-accent);
   padding: 10px;
 }
 .skip-link:focus {
@@ -1048,9 +1047,9 @@ dialog::backdrop {
   min-height: 44px;
   padding: 10px 12px;
   margin-bottom: 8px;
-  background: #272727;
-  color: #f7f7f7;
-  border: 1px solid #a5a5a5;
+  background: var(--muse-control);
+  color: var(--muse-text);
+  border: 1px solid var(--muse-control-border);
   cursor: pointer;
 }
 .close-preferences label:has(:checked) {
@@ -1069,7 +1068,7 @@ dialog::backdrop {
   height: 16px;
   margin: 0;
   padding: 0;
-  border: 1px solid #a5a5a5;
+  border: 1px solid var(--muse-control-border);
   background: transparent;
   border-radius: 0;
 }

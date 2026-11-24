@@ -4,12 +4,12 @@
 .muse-scroll-indicator {
   position: fixed;
   z-index: 1000;
-  background: #ffffff66;
+  background: var(--muse-scroll-thumb);
   border: 2px solid transparent;
   background-clip: padding-box;
   touch-action: none;
   user-select: none;
   cursor: default;
 }
-.muse-scroll-indicator:hover { background-color: #ffffff99; }
+.muse-scroll-indicator:hover { background-color: var(--muse-scroll-thumb-hover); }
 .muse-scroll-indicator[hidden] { display: none; }
