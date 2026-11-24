@@ -629,7 +629,7 @@ export function SftpScreen() {
             )}
             <p className="sub">
               Open a folder and choose “Use this music folder”, then Sync its catalog.
-              Cloud icons identify music that plays over SSH; keep the server connected.
+              Remote songs play over SSH, so keep the server connected.
             </p>
           </>
         ) : (

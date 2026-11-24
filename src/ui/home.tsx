@@ -195,7 +195,6 @@ export function HomeScreen() {
                       <Cover
                         key={album?.cover ?? album?.id}
                         path={album?.cover}
-                        remote={album?.id.startsWith("sftp:")}
                         title={album?.title ?? "Your music starts here."}
                         artist={album?.artist ?? "Import a folder to begin"}
                       />

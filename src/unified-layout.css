@@ -671,9 +671,6 @@
 }
 
 /* Quiet source hint belongs to the cover, not the metadata text. */
-.remote-cover-icon { position: absolute; z-index: 3; top: 8px; right: 8px; display: grid; place-items: center; width: 24px; height: 24px; color: #f6f6f6; background: #191919cc; pointer-events: auto; }
-.player .thumb .remote-cover-icon { top: 2px; right: 2px; width: 16px; height: 16px; }
-.player .thumb .remote-cover-icon svg { width: 12px; height: 12px; }
 .sftp-page progress {
   display: block;
   width: min(100%,440px);

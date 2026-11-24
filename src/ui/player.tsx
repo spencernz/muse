@@ -243,7 +243,6 @@ export function MiniPlayer() {
           <Cover
             key={track?.cover ?? track?.id}
             path={track?.cover}
-            remote={track?.id.startsWith("sftp:")}
             title={track?.album ?? "♪"}
             artist={track?.artist}
           />
@@ -407,8 +406,7 @@ function Queue() {
   );
 }
 export function NowPlayingScreen() {
-  const [tab, setTab] = useState<"playing" | "lyrics" | "visuals">("playing");
-  const [visualWide,setVisualWide]=useState(false);
+  const [tab, setTab] = useState<"playing" | "visuals">("playing");
   const track = useMuse((s) => s.playback.current),
     context = useMuse((s) => s.context),
     revision = useMuse((s) => s.revision);
@@ -483,8 +481,12 @@ export function NowPlayingScreen() {
       useMuse.getState().fail(e);
     }
   }
+  const tabs = [
+    ["playing", "Now playing"],
+    ["visuals", "Visual"],
+  ] as const;
   return (
-    <article className={`now-page ${tab==="visuals"&&visualWide?"now-page--visual-wide":""}`} aria-label="Now Playing">
+    <article className="now-page" aria-label="Now Playing">
       {source && (
         <img
           key={source}
@@ -499,68 +501,103 @@ export function NowPlayingScreen() {
       )}
       <div className="now-atmosphere-overlay" aria-hidden="true" />
       <div className="now-main">
-        <div className="now-artwork" hidden={tab==="visuals"&&visualWide}>
-          <Cover
-            key={cover}
-            path={cover}
-            remote={track.id.startsWith("sftp:")}
-            title={track.album}
-            artist={track.artist}
-          />
+        <div className="now-tabs" role="tablist" aria-label="Now Playing views">
+          {tabs.map(([value, label], index) => (
+            <button
+              key={value}
+              id={`now-tab-${value}`}
+              role="tab"
+              aria-selected={tab === value}
+              aria-controls="now-panel-view"
+              tabIndex={tab === value ? 0 : -1}
+              onClick={() => setTab(value)}
+              onKeyDown={(event) => {
+                if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+                event.preventDefault();
+                const next =
+                  event.key === "Home"
+                    ? tabs[0][0]
+                    : event.key === "End"
+                      ? tabs[tabs.length - 1][0]
+                      : tabs[(index + 1) % tabs.length][0];
+                setTab(next);
+                document.getElementById(`now-tab-${next}`)?.focus();
+              }}
+            >
+              {label}
+            </button>
+          ))}
         </div>
-        <div className="now-information">
-          <div className="now-tabs" role="tablist" aria-label="Now Playing views">
-            {(["playing", "lyrics", "visuals"] as const).map(value => <button key={value} id={`now-tab-${value}`} role="tab" aria-selected={tab===value} aria-controls={`now-panel-${value}`} tabIndex={tab===value?0:-1} onClick={()=>setTab(value)} onKeyDown={event=>{if(["ArrowLeft","ArrowRight","Home","End"].includes(event.key)){event.preventDefault();const values=["playing","lyrics","visuals"] as const;const next=event.key==="Home"?values[0]:event.key==="End"?values[2]:values[(values.indexOf(value)+(event.key==="ArrowRight"?1:2))%3];setTab(next);document.getElementById(`now-tab-${next}`)?.focus();}}}>{value==="playing"?"NOW PLAYING":value==="lyrics"?"LYRICS":"VISUAL EFFECTS"}</button>)}
-          </div>
-          <div className="now-view-panels">
-          <div id="now-panel-visuals" className="now-view-panel" role="tabpanel" hidden={tab!=="visuals"} aria-labelledby="now-tab-visuals">{tab==="visuals" && <VisualEffectsTab source={source} expanded={visualWide} onExpandedChange={setVisualWide}/>}</div>
-          <div id="now-panel-lyrics" className="now-view-panel" role="tabpanel" hidden={tab!=="lyrics"} aria-labelledby="now-tab-lyrics">{tab==="lyrics" && <LyricsPanel key={track.id} trackId={track.id} />}</div>
-          <div id="now-panel-playing" className="now-view-panel" role="tabpanel" hidden={tab!=="playing"} aria-labelledby="now-tab-playing">
-          <h1 className="now-title">{track.title}</h1>
-          <div className="now-artist">
-            <button
-              className="text-link"
-              onClick={() =>
-                useMuse.getState().navigate("artist", track.artist)
-              }
+        <div className="now-stage">
+          <div className="now-left">
+            <div
+              id="now-panel-view"
+              className="now-view"
+              role="tabpanel"
+              aria-labelledby={`now-tab-${tab}`}
             >
-              {track.artist}
-            </button>
+              {tab === "visuals" ? (
+                <VisualEffectsTab source={source} />
+              ) : (
+                <div className="now-artwork">
+                  <Cover
+                    key={cover}
+                    path={cover}
+                    title={track.album}
+                    artist={track.artist}
+                  />
+                </div>
+              )}
+            </div>
+            <div className="now-information">
+              <h1 className="now-title">{track.title}</h1>
+              <div className="now-artist">
+                <button
+                  className="text-link"
+                  onClick={() =>
+                    useMuse.getState().navigate("artist", track.artist)
+                  }
+                >
+                  {track.artist}
+                </button>
+              </div>
+              <div className="now-metadata">
+                <button
+                  className="text-link now-album"
+                  onClick={() =>
+                    useMuse.getState().navigate("album", track.albumId)
+                  }
+                >
+                  {track.album}
+                </button>
+                {[track.year, track.genre, duration(track.duration)]
+                  .filter(Boolean)
+                  .map((value) => ` · ${value}`)
+                  .join("")}
+              </div>
+              <div className="actions now-actions">
+                <button
+                  className={`secondary ${liked ? "active" : ""}`}
+                  aria-pressed={liked}
+                  onClick={() => void favourite()}
+                >
+                  <Heart size={15} fill={liked ? "currentColor" : "none"} />
+                  {liked ? "Favourited" : "Favourite"}
+                </button>
+                <button className="secondary" onClick={() => setAdd(track.id)}>
+                  Add to playlist
+                </button>
+              </div>
+            </div>
           </div>
-          <div className="now-album">
-            <button
-              className="text-link"
-              onClick={() =>
-                useMuse.getState().navigate("album", track.albumId)
-              }
-            >
-              {track.album}
-            </button>
+          <div className="now-lyrics">
+            <h2 className="now-lyrics-title">Lyrics</h2>
+            <LyricsPanel key={track.id} trackId={track.id} />
           </div>
-          <div className="now-metadata">
-            {[track.year, track.genre, duration(track.duration)]
-              .filter(Boolean)
-              .join(" · ")}
-          </div>
-          <div className="actions now-actions">
-            <button
-              className={`secondary ${liked ? "active" : ""}`}
-              aria-pressed={liked}
-              onClick={() => void favourite()}
-            >
-              <Heart size={15} fill={liked ? "currentColor" : "none"} />
-              {liked ? "Favourited" : "Favourite"}
-            </button>
-            <button className="secondary" onClick={() => setAdd(track.id)}>
-              Add to playlist
-            </button>
-          </div>
-          </div>
-          </div>
-          <div className="now-playback">
-            <SeekBar key={track.id} showTime />
-            <NowPlayingToolbar/>
-          </div>
+        </div>
+        <div className="now-playback">
+          <SeekBar key={track.id} showTime />
+          <NowPlayingToolbar />
         </div>
       </div>
       <div

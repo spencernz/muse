@@ -100,6 +100,7 @@ const library = {
 };
 beforeEach(() => {
   vi.resetAllMocks();
+  vi.mocked(api.lyrics).mockResolvedValue(null);
   vi.mocked(api.windowFullscreen).mockResolvedValue(false);
   vi.mocked(api.exitFullscreen).mockResolvedValue(undefined);
   vi.mocked(api.artistAlbumIds).mockResolvedValue([]);
@@ -914,14 +915,13 @@ it("reserves macOS traffic-light space and supplies a transparent drag region", 
   }
 });
 
-it("identifies remote albums and the current remote track without changing player controls", async()=>{
+it("shows remote albums and the current remote track like local music, without a badge", async()=>{
   const remoteSong={...song,id:"sftp:source:track",albumId:"sftp:source:album:one"};
   act(()=>useMuse.setState({page:"library",library:{...emptyLibrary,tracks:1,albums:[{...album,id:remoteSong.albumId}]},playback:{...emptyPlayback,current:remoteSong,queue:[remoteSong.id]}}));
   render(<App/>);
-  expect(await screen.findAllByRole("img", {name:"Remote music (SSH)"})).toHaveLength(2);
-  expect(screen.queryByText("Remote · SSH")).not.toBeInTheDocument();
-  act(()=>useMuse.setState({library:{...emptyLibrary,tracks:1,albums:[album]},playback:{...emptyPlayback,current:song,queue:[song.id]}}));
+  expect(await screen.findByRole("button",{name:new RegExp(album.title)})).toBeVisible();
   expect(screen.queryByRole("img",{name:"Remote music (SSH)"})).not.toBeInTheDocument();
+  expect(screen.queryByText("Remote · SSH")).not.toBeInTheDocument();
   expect(screen.getByRole("button",{name:"Play"})).toBeEnabled();
   expect(api.player).not.toHaveBeenCalled();
 });
@@ -963,21 +963,30 @@ it("keeps the volume popup interactive through native range focus changes until 
   await user.click(screen.getByRole("heading",{level:1}));expect(screen.queryByRole("dialog",{name:"Volume controls"})).not.toBeInTheDocument();
 });
 
-it("switches to lyrics without replacing playback and supports keyboard tabs", async () => {
+it("shows lyrics beside the song details and switches Now playing and Visual with the keyboard", async () => {
   vi.mocked(api.lyrics).mockResolvedValue(null);
+  vi.mocked(api.visualizerActive).mockResolvedValue();vi.mocked(api.visualizerFrame).mockResolvedValue({trackId:song.id,epoch:1,sequence:0,available:false,playing:false,bands:[],waveform:[],rms:0,bass:0,mids:0,treble:0});
+  const context=vi.spyOn(HTMLCanvasElement.prototype,'getContext').mockReturnValue(null);
+  try{
   act(()=>useMuse.setState({page:"now",playback:{...emptyPlayback,current:song,queue:[song.id]}}));
-  const user=userEvent.setup(); render(<App/>);
-  expect(api.lyrics).not.toHaveBeenCalled();
-  expect(screen.getAllByRole("tab").map(tab=>tab.textContent)).toEqual(["NOW PLAYING","LYRICS","VISUAL EFFECTS"]);
-  const lyrics=screen.getByRole("tab",{name:"LYRICS"});
-  await user.click(lyrics);
+  const user=userEvent.setup(); const {container}=render(<App/>);
+  expect(screen.getAllByRole("tab").map(tab=>tab.textContent)).toEqual(["Now playing","Visual"]);
   expect(await screen.findByText(/Lyrics aren’t available/)).toBeVisible();
   expect(api.lyrics).toHaveBeenCalledWith(song.id);
-  expect(screen.queryByRole("heading",{name:song.title})).not.toBeInTheDocument();
-  expect(screen.getByRole("slider",{name:"Playback position"})).toBeVisible();
-  await user.keyboard("{ArrowLeft}");
-  expect(screen.getByRole("tab",{name:"NOW PLAYING"})).toHaveFocus();
   expect(screen.getByRole("heading",{name:song.title})).toBeVisible();
+  expect(container.querySelector(".now-artwork")).toBeInTheDocument();
+  screen.getByRole("tab",{name:"Now playing"}).focus();
+  await user.keyboard("{ArrowRight}");
+  expect(screen.getByRole("tab",{name:"Visual"})).toHaveFocus();
+  expect(screen.getByRole("region",{name:"Visual effects"})).toBeInTheDocument();
+  expect(container.querySelector(".now-artwork")).not.toBeInTheDocument();
+  expect(screen.getByRole("heading",{name:song.title})).toBeVisible();
+  expect(screen.getByRole("region",{name:"Lyrics"})).toBeVisible();
+  expect(screen.getByRole("slider",{name:"Playback position"})).toBeVisible();
+  expect(screen.queryByRole("button",{name:"Expand visual width"})).not.toBeInTheDocument();
+  await user.keyboard("{ArrowRight}");
+  expect(screen.getByRole("tab",{name:"Now playing"})).toHaveFocus();
+  }finally{context.mockRestore();}
 });
 
 it("shows artist albums above songs and opens an album from the artist collection", async()=>{
@@ -1008,12 +1017,3 @@ it("keeps native fullscreen exit and Now Playing close in one window-controls ro
  expect(controls).toContainElement(screen.getByRole("button",{name:"Close Now Playing"}));
 });
 
-it('expands visuals with outer gutters while other Now Playing tabs retain their album artwork',async()=>{
- vi.mocked(api.visualizerActive).mockResolvedValue();vi.mocked(api.visualizerFrame).mockResolvedValue({trackId:song.id,epoch:1,sequence:0,available:false,playing:false,bands:[],waveform:[],rms:0,bass:0,mids:0,treble:0});
- const context=vi.spyOn(HTMLCanvasElement.prototype,'getContext').mockReturnValue(null);
- try{
-  act(()=>useMuse.setState({page:'now',playback:{...emptyPlayback,current:song,queue:[song.id]}}));const user=userEvent.setup();const {container}=render(<App/>);await user.click(screen.getByRole('tab',{name:'VISUAL EFFECTS'}));await user.click(screen.getByRole('button',{name:'Expand visual width'}));expect(container.querySelector('.now-page')).toHaveClass('now-page--visual-wide');expect(container.querySelector('.now-artwork')).toHaveAttribute('hidden');expect(screen.getByRole('slider',{name:'Playback position'})).toBeVisible();
-  await user.click(screen.getByRole('tab',{name:'NOW PLAYING'}));expect(container.querySelector('.now-page')).not.toHaveClass('now-page--visual-wide');expect(container.querySelector('.now-artwork')).not.toHaveAttribute('hidden');
-  await user.click(screen.getByRole('tab',{name:'VISUAL EFFECTS'}));expect(container.querySelector('.now-page')).toHaveClass('now-page--visual-wide');await user.click(screen.getByRole('button',{name:'Restore visual width'}));expect(container.querySelector('.now-artwork')).not.toHaveAttribute('hidden');
- }finally{context.mockRestore();}
-});

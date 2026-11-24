@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Cloud, Disc3, X } from "lucide-react";
+import { Disc3, X } from "lucide-react";
 import { artwork } from "../native";
 import { useMuse } from "../store";
 import type { Album } from "../types";
@@ -9,18 +9,15 @@ export function Cover({
   title,
   artist = "",
   className = "",
-  remote = false,
 }: {
   path?: string | null;
   title: string;
   artist?: string;
   className?: string;
-  remote?: boolean;
 }) {
   const [failed, setFailed] = useState(false);
   return (
     <div className={`artwork ${className}`}>
-      {remote && <span className="remote-cover-icon" role="img" aria-label="Remote music (SSH)" title="Remote music (SSH)"><Cloud size={16} aria-hidden="true" /></span>}
       {path && !failed ? (
         <img
           src={artwork(path)}
@@ -50,7 +47,6 @@ export function AlbumCard({ album }: { album: Album }) {
         <Cover
           key={album.cover}
           path={album.cover}
-          remote={album.id.startsWith("sftp:")}
           title={album.title}
           artist={album.artist}
         />

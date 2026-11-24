@@ -176,7 +176,6 @@ export function AlbumScreen() {
               <Cover
                 key={source}
                 path={album.cover}
-                remote={album.id.startsWith("sftp:")}
                 title={album.title}
                 artist={album.artist}
               />
