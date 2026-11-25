@@ -1,6 +1,6 @@
 use crate::{
     db::{Db, Result},
-    models::{Playback, TrackQuery},
+    models::{Playback, Track, TrackQuery},
     queue::QueueOrder,
 };
 use rodio::{Decoder, OutputStream, Sink};
@@ -14,6 +14,27 @@ use std::{
     time::{Duration, Instant},
 };
 use tauri::{AppHandle, Emitter};
+
+/// Tells the desktop (MPRIS) what is playing. Covers are cached image files, so the
+/// shell gets a file:// URL it can load for the notification and lock screen.
+fn publish_metadata(controls: &mut MediaControls, track: Option<&Track>) {
+    let cover = track.and_then(|t| cover_url(t.cover.as_deref()));
+    let _ = controls.set_metadata(MediaMetadata {
+        title: track.map(|t| t.title.as_str()),
+        artist: track.map(|t| t.artist.as_str()),
+        album: track.map(|t| t.album.as_str()),
+        duration: track.map(|t| Duration::from_secs_f64(t.duration.max(0.))),
+        cover_url: cover.as_deref(),
+    });
+}
+
+fn cover_url(path: Option<&str>) -> Option<String> {
+    let path = std::path::Path::new(path.filter(|p| !p.is_empty())?);
+    if !path.is_file() {
+        return None;
+    }
+    url::Url::from_file_path(path).ok().map(String::from)
+}
 
 #[derive(Debug, Clone, Deserialize, Default)]
 #[serde(default, rename_all = "camelCase")]
@@ -288,13 +309,7 @@ impl Engine {
             let _ = self.app.emit("history-changed", ());
         }
         if let Some(controls) = &mut self.controls {
-            let _ = controls.set_metadata(MediaMetadata {
-                title: Some(&track.title),
-                artist: Some(&track.artist),
-                album: Some(&track.album),
-                duration: Some(Duration::from_secs_f64(track.duration.max(0.))),
-                ..Default::default()
-            });
+            publish_metadata(controls, Some(&track));
         }
         Ok(())
     }
@@ -368,13 +383,7 @@ impl Engine {
                     self.playback.current = Some(self.db.track(&current.id)?);
                 }
                 if let Some(controls) = &mut self.controls {
-                    let current = self.playback.current.as_ref();
-                    let _ = controls.set_metadata(MediaMetadata {
-                        title: current.map(|t| t.title.as_str()),
-                        artist: current.map(|t| t.artist.as_str()),
-                        album: current.map(|t| t.album.as_str()),
-                        ..Default::default()
-                    });
+                    publish_metadata(controls, self.playback.current.as_ref());
                 }
             }
             "forget" => {
@@ -395,13 +404,7 @@ impl Engine {
                         .get(self.playback.index)
                         .and_then(|id| self.db.track(id).ok());
                     if let Some(controls) = &mut self.controls {
-                        let current = self.playback.current.as_ref();
-                        let _ = controls.set_metadata(MediaMetadata {
-                            title: current.map(|t| t.title.as_str()),
-                            artist: current.map(|t| t.artist.as_str()),
-                            album: current.map(|t| t.album.as_str()),
-                            ..Default::default()
-                        });
+                        publish_metadata(controls, self.playback.current.as_ref());
                     }
                 }
                 if self.playback.queue.len() != queue_len {
@@ -612,5 +615,24 @@ impl Engine {
                 MediaPlayback::Paused { progress }
             });
         }
+    }
+}
+
+#[cfg(test)]
+mod cover_url_tests {
+    use super::cover_url;
+
+    #[test]
+    fn cached_cover_becomes_a_file_url_and_missing_ones_are_skipped() {
+        let dir = std::env::temp_dir().join(format!("muse cover {}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let file = dir.join("abc.jpg");
+        std::fs::write(&file, b"x").unwrap();
+        let url = cover_url(file.to_str()).unwrap();
+        assert!(url.starts_with("file:///") && url.ends_with("/abc.jpg") && url.contains("muse%20cover"));
+        assert_eq!(cover_url(dir.join("gone.jpg").to_str()), None);
+        assert_eq!(cover_url(Some("")), None);
+        assert_eq!(cover_url(None), None);
+        std::fs::remove_dir_all(dir).unwrap();
     }
 }
