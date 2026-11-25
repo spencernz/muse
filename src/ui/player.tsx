@@ -564,7 +564,7 @@ export function NowPlayingScreen() {
               </div>
               <div className="now-actions">
                 <button
-                  className={`iconbtn ${liked ? "active" : ""}`}
+                  className={`iconbtn favourite ${liked ? "active" : ""}`}
                   aria-pressed={liked}
                   aria-label={liked ? "Remove from favourites" : "Favourite"}
                   title={liked ? "Remove from favourites" : "Favourite"}

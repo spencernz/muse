@@ -312,7 +312,7 @@ export function TrackList({
                       </span>
                       <span role="cell" className="row-actions">
                         <button
-                          className={`iconbtn ${track.liked ? "active" : ""}`}
+                          className={`iconbtn favourite ${track.liked ? "active" : ""}`}
                           aria-label={`${track.liked ? "Unfavourite" : "Favourite"} ${track.title}`}
                           onClick={() => void favourite(track)}
                         >

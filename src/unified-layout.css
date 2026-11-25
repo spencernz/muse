@@ -161,6 +161,7 @@
 
 .content .artwork {
   background: var(--muse-art);
+  color: var(--muse-art-text);
 }
 
 .content .artwork:after {
@@ -281,6 +282,7 @@
 
 .player .artwork {
   background: var(--muse-art);
+  color: var(--muse-art-text);
 }
 
 .player .artwork .art-text,.player .artwork .art-sub {
